@@ -25,5 +25,6 @@ enum Strings {
         static let videoNotFound = "I found the subtitles but not the video next to them. Drop the video too, or click to pick both files."
         static let tooManyVideos = "Please drop only one video at a time."
         static let noUsable = "That doesn't look like a video or a .srt file. Try again."
+        static let videoUnreadable = "I couldn't read that video file. It may be in an unsupported format or damaged."
     }
 }

@@ -41,7 +41,7 @@ struct DropZoneView: View {
     }
 
     private func collectURLs(from providers: [NSItemProvider]) {
-        var urls: [URL] = []
+        let urls = URLBox()
         let group = DispatchGroup()
         for p in providers.prefix(2) {
             group.enter()
@@ -50,7 +50,10 @@ struct DropZoneView: View {
                 group.leave()
             }
         }
-        group.notify(queue: .main) { if !urls.isEmpty { onOpen(urls) } }
+        group.notify(queue: .main) {
+            let collected = urls.snapshot()
+            if !collected.isEmpty { onOpen(collected) }
+        }
     }
 
     private func pickFiles() {
@@ -63,4 +66,12 @@ struct DropZoneView: View {
             onOpen(Array(panel.urls.prefix(2)))
         }
     }
+}
+
+/// Thread-safe URL accumulator for concurrent NSItemProvider completions.
+private final class URLBox: @unchecked Sendable {
+    private var urls: [URL] = []
+    private let lock = NSLock()
+    func append(_ url: URL) { lock.lock(); urls.append(url); lock.unlock() }
+    func snapshot() -> [URL] { lock.lock(); defer { lock.unlock() }; return urls }
 }
