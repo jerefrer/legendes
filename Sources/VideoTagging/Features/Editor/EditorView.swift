@@ -40,7 +40,9 @@ struct EditorView: View {
                     onCut: vm.cutHere,
                     onMoveStart: vm.moveStart(byMs:),
                     onMoveEnd: vm.moveEnd(byMs:),
-                    onMerge: vm.mergeWithPrevious
+                    onMerge: vm.mergeWithPrevious,
+                    onBeginEditing: { vm.beginTextEditing() },
+                    onEndEditing: { vm.endTextEditing() }
                 )
 
                 SaveStatusLabel(status: vm.saveStatus)
@@ -54,8 +56,7 @@ struct EditorView: View {
                         currentIndex: vm.currentIndex,
                         onSelect: { vm.goToSection($0) },
                         onDragBoundary: { beforeIndex, toMs in
-                            vm.partition.moveBoundary(beforeIndex: beforeIndex, toMs: toMs)
-                            vm.save()
+                            vm.moveBoundaryByDrag(beforeIndex: beforeIndex, toMs: toMs)
                         }
                     )
                     Button { vm.nextSection() } label: { Image(systemName: "chevron.right").font(.system(size: 24)) }
@@ -87,6 +88,8 @@ struct EditorView: View {
             else { vm.moveEnd(byMs: delta) }
             return .handled
         }
+        .onAppear { PendingSaveFlusher.flush = { vm.flushSave() } }
+        .onDisappear { vm.flushSave(); PendingSaveFlusher.flush = {} }
         .toolbar {
             ToolbarItem {
                 Button { showHelp = true } label: { Image(systemName: "questionmark.circle") }

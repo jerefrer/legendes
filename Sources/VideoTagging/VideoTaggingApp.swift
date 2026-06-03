@@ -2,6 +2,11 @@ import SwiftUI
 import AppKit
 import VideoTaggingCore
 
+// C1: app-level holder so AppDelegate can flush the active editor's pending save.
+enum PendingSaveFlusher {
+    @MainActor static var flush: () -> Void = {}
+}
+
 @main
 struct VideoTaggingApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
@@ -21,6 +26,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.activate(ignoringOtherApps: true)
     }
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+    func applicationWillTerminate(_ notification: Notification) {
+        // Flush any pending debounced autosave before the process exits.
+        // applicationWillTerminate is always called on the main thread,
+        // which satisfies the @MainActor isolation of PendingSaveFlusher.flush.
+        PendingSaveFlusher.flush()
+    }
 }
 
 struct RootView: View {

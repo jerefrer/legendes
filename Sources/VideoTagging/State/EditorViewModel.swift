@@ -17,6 +17,7 @@ final class EditorViewModel {
     var isListVisible: Bool = false
     var saveStatus: AutosaveService.Status = .saved
     var isPlaying: Bool = false
+    var isEditingText: Bool = false
 
     private let autosave = AutosaveService()
     // @ObservationIgnored + nonisolated(unsafe): deinit is nonisolated in Swift 6;
@@ -51,12 +52,20 @@ final class EditorViewModel {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.currentMs = Int(time.seconds * 1000)
-                self.currentIndex = self.partition.indexContaining(ms: self.currentMs)
+                // Only track section index when the user is not editing text,
+                // so keystrokes always target the section they started editing.
+                if !self.isEditingText {
+                    self.currentIndex = self.partition.indexContaining(ms: self.currentMs)
+                }
             }
         }
     }
 
-    var currentSection: Section { partition.sections[currentIndex] }
+    // M1: clamp the index so an out-of-range value never crashes.
+    var currentSection: Section {
+        let i = min(max(currentIndex, 0), partition.sections.count - 1)
+        return partition.sections[i]
+    }
 
     // MARK: Playback
     func togglePlay() {
@@ -67,6 +76,8 @@ final class EditorViewModel {
         player.seek(to: CMTime(value: CMTimeValue(clamped), timescale: 1000),
                     toleranceBefore: .zero, toleranceAfter: .zero)
         currentMs = clamped
+        // M2: keep currentIndex coherent immediately after a seek.
+        currentIndex = partition.indexContaining(ms: clamped)
     }
     func jog(byMs delta: Int) { seek(toMs: currentMs + delta) }
 
@@ -78,6 +89,10 @@ final class EditorViewModel {
     }
     func previousSection() { goToSection(currentIndex - 1) }
     func nextSection() { goToSection(currentIndex + 1) }
+
+    // MARK: Text editing focus
+    func beginTextEditing() { player.pause(); isEditingText = true }
+    func endTextEditing() { isEditingText = false }
 
     // MARK: Editing (delegates to Core, then saves)
     func cutHere() {
@@ -109,11 +124,20 @@ final class EditorViewModel {
         save()
     }
 
+    // I2: go through a VM method so the timeline is the single mutation site.
+    func moveBoundaryByDrag(beforeIndex: Int, toMs: Int) {
+        partition.moveBoundary(beforeIndex: beforeIndex, toMs: toMs)
+        save()
+    }
+
     func save() {
         autosave.scheduleSave(sections: partition.sections, to: srtURL) { [weak self] status in
             self?.saveStatus = status
         }
     }
+
+    // C1: flush any pending debounced save synchronously (used on termination).
+    func flushSave() { autosave.flushNow() }
 }
 
 import AVFoundation

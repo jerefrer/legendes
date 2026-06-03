@@ -34,7 +34,9 @@ struct TimelineView: View {
                         .offset(x: bx - 1.5)
                         .help("Drag to move the boundary")
                         .gesture(
-                            DragGesture()
+                            // Use the "timeline" coordinate space so value.location.x
+                            // is measured against the full timeline width, not the 3pt handle.
+                            DragGesture(minimumDistance: 0, coordinateSpace: .named("timeline"))
                                 .onChanged { value in
                                     let ms = Int(value.location.x / width * CGFloat(totalMs))
                                     onDragBoundary(i, ms)
@@ -42,6 +44,7 @@ struct TimelineView: View {
                         )
                 }
             }
+            .coordinateSpace(name: "timeline")
         }
         .frame(height: 44)
         .clipShape(RoundedRectangle(cornerRadius: 6))

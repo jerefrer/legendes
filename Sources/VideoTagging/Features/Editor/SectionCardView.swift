@@ -12,6 +12,10 @@ struct SectionCardView: View {
     let onMoveStart: (Int) -> Void
     let onMoveEnd: (Int) -> Void
     let onMerge: () -> Void
+    let onBeginEditing: () -> Void
+    let onEndEditing: () -> Void
+
+    @FocusState private var isFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
@@ -25,6 +29,10 @@ struct SectionCardView: View {
                 .padding(8)
                 .background(Theme.Colors.background)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                .focused($isFocused)
+                .onChange(of: isFocused) { _, focused in
+                    focused ? onBeginEditing() : onEndEditing()
+                }
 
             BigButton(title: Strings.cutHere, prominent: true, systemImage: "scissors", action: onCut)
 
