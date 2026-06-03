@@ -8,6 +8,9 @@ enum Theme {
         static let gapSection = Color(red: 0.35, green: 0.29, blue: 0.16)
         static let textPrimary = Color.white
         static let textSecondary = Color(white: 0.7)
+        static let background = Color(white: 0.1)
+        static let textOnAccent = Color.white
+        static let error = Color.red
     }
     enum Fonts {
         static let title = Font.system(size: 22, weight: .semibold)

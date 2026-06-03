@@ -4,7 +4,6 @@ import VideoTaggingCore
 
 struct EditorView: View {
     @Bindable var vm: EditorViewModel
-    @State private var isPlaying = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -14,10 +13,10 @@ struct EditorView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
                 TransportBar(
-                    isPlaying: isPlaying,
+                    isPlaying: vm.isPlaying,
                     currentMs: vm.currentMs,
                     totalMs: vm.totalMs,
-                    onTogglePlay: { vm.togglePlay(); isPlaying.toggle() },
+                    onTogglePlay: { vm.togglePlay() },
                     onScrub: { vm.seek(toMs: $0) }
                 )
 
@@ -42,7 +41,7 @@ struct EditorView: View {
             }
             .padding(Theme.Spacing.l)
         }
-        .background(Color(white: 0.1))
+        .background(Theme.Colors.background)
     }
 }
 
@@ -53,7 +52,7 @@ struct SaveStatusLabel: View {
             case .saved: (Strings.saved, Theme.Colors.textSecondary)
             case .saving: (Strings.saving, Theme.Colors.textSecondary)
             case .idle: ("", .clear)
-            case .failed(let m): ("\(Strings.saveFailed): \(m)", .red)
+            case .failed(let m): ("\(Strings.saveFailed): \(m)", Theme.Colors.error)
         }
         Text(text).font(Theme.Fonts.label).foregroundStyle(color)
     }

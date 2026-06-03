@@ -16,11 +16,13 @@ final class EditorViewModel {
     var totalMs: Int = 0
     var isListVisible: Bool = false
     var saveStatus: AutosaveService.Status = .saved
+    var isPlaying: Bool = false
 
     private let autosave = AutosaveService()
     // @ObservationIgnored + nonisolated(unsafe): deinit is nonisolated in Swift 6;
     // this var is only ever written/read on the main thread.
     @ObservationIgnored nonisolated(unsafe) private var timeObserver: Any?
+    @ObservationIgnored nonisolated(unsafe) private var statusObservation: NSKeyValueObservation?
 
     init(videoURL: URL, srtURL: URL, partition: SectionPartition) {
         self.videoURL = videoURL
@@ -29,10 +31,16 @@ final class EditorViewModel {
         self.totalMs = partition.duration
         self.player = AVPlayer(url: videoURL)
         observePlayhead()
+        statusObservation = player.observe(\.timeControlStatus, options: [.initial, .new]) { [weak self] player, _ in
+            Task { @MainActor [weak self] in
+                self?.isPlaying = (player.timeControlStatus == .playing)
+            }
+        }
     }
 
     deinit {
         if let timeObserver { player.removeTimeObserver(timeObserver) }
+        statusObservation = nil
     }
 
     private func observePlayhead() {

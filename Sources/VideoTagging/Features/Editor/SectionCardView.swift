@@ -15,7 +15,7 @@ struct SectionCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("SECTION \(index + 1)  ·  \(SRTTime(milliseconds: section.start).displayString) – \(SRTTime(milliseconds: section.end).displayString)")
+            Text(Strings.sectionHeader(index, SRTTime(milliseconds: section.start).displayString, SRTTime(milliseconds: section.end).displayString))
                 .font(Theme.Fonts.label)
                 .foregroundStyle(Theme.Colors.textSecondary)
 
@@ -23,7 +23,7 @@ struct SectionCardView: View {
                 .font(Theme.Fonts.body)
                 .frame(minHeight: 80)
                 .padding(8)
-                .background(Color(white: 0.1))
+                .background(Theme.Colors.background)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
             BigButton(title: Strings.cutHere, prominent: true, systemImage: "scissors", action: onCut)

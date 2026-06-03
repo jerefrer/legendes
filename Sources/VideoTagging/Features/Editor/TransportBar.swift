@@ -13,7 +13,7 @@ struct TransportBar: View {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 26))
                     .frame(width: 64, height: 64)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Theme.Colors.textOnAccent)
                     .background(Theme.Colors.accent)
                     .clipShape(Circle())
             }

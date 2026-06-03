@@ -24,9 +24,11 @@ final class AutosaveService {
                 try text.write(to: url, atomically: true, encoding: .utf8)
                 self.status = .saved
                 onStatus(.saved)
+                self.pending = nil
             } catch {
                 self.status = .failed(error.localizedDescription)
                 onStatus(.failed(error.localizedDescription))
+                self.pending = nil
             }
         }
     }

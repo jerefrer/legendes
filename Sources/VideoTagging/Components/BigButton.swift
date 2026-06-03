@@ -16,7 +16,7 @@ struct BigButton: View {
             .padding(.vertical, 14)
             .padding(.horizontal, 20)
             .frame(maxWidth: prominent ? .infinity : nil)
-            .foregroundStyle(prominent ? Color.white : Theme.Colors.textPrimary)
+            .foregroundStyle(prominent ? Theme.Colors.textOnAccent : Theme.Colors.textPrimary)
             .background(prominent ? Theme.Colors.accent : Theme.Colors.panel)
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }

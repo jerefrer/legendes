@@ -15,6 +15,10 @@ enum Strings {
     static let previousSection = "Previous"
     static let nextSection = "Next"
 
+    static func sectionHeader(_ index: Int, _ start: String, _ end: String) -> String {
+        "SECTION \(index + 1)  ·  \(start) – \(end)"
+    }
+
     enum DropZone {
         static let title = "Drop a video here"
         static let subtitle = "Drop a video (and optionally its .srt), or click to choose files."
