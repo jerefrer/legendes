@@ -8,6 +8,12 @@ struct EditorView: View {
     var body: some View {
         HStack(spacing: 0) {
             VStack(spacing: Theme.Spacing.m) {
+                HStack {
+                    Spacer()
+                    BigButton(title: vm.isListVisible ? Strings.hideList : Strings.showList,
+                              systemImage: "sidebar.right") { vm.isListVisible.toggle() }
+                }
+
                 VideoPlayer(player: vm.player)
                     .frame(minHeight: 260)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -58,6 +64,12 @@ struct EditorView: View {
                 Spacer()
             }
             .padding(Theme.Spacing.l)
+
+            if vm.isListVisible {
+                SectionListPanel(sections: vm.partition.sections,
+                                 currentIndex: vm.currentIndex,
+                                 onSelect: { vm.goToSection($0) })
+            }
         }
         .background(Theme.Colors.background)
     }
