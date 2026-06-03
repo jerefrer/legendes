@@ -23,30 +23,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
 
-// Temporary root for Phase 2 launch verification; replaced by AppRouter in Phase 3.
 struct RootView: View {
-    @State private var vm: EditorViewModel?
-
+    @State private var router = AppRouter()
     var body: some View {
-        Group {
-            if let vm { EditorView(vm: vm) }
-            else { Text("Set VIDEO_TAGGER_SAMPLE to a video path to test.").padding() }
+        switch router.screen {
+        case .dropZone:
+            DropZoneView(onOpen: { router.open(urls: $0) }, errorMessage: router.errorMessage)
+        case .editor(let vm):
+            EditorView(vm: vm)
         }
-        .task { await load() }
-    }
-
-    @MainActor private func load() async {
-        guard vm == nil,
-              let path = ProcessInfo.processInfo.environment["VIDEO_TAGGER_SAMPLE"] else { return }
-        let video = URL(fileURLWithPath: path)
-        let srt = video.deletingPathExtension().appendingPathExtension("srt")
-        let durationMs = await videoDurationMs(video)
-        let partition: SectionPartition
-        if let content = try? String(contentsOf: srt, encoding: .utf8) {
-            partition = SectionPartition(duration: durationMs, fromEntries: SRTParser.parse(content))
-        } else {
-            partition = SectionPartition(duration: durationMs)
-        }
-        vm = EditorViewModel(videoURL: video, srtURL: srt, partition: partition)
     }
 }
