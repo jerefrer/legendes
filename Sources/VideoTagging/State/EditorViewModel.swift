@@ -1,0 +1,117 @@
+import Foundation
+import AVKit
+import Observation
+import VideoTaggingCore
+
+@MainActor
+@Observable
+final class EditorViewModel {
+    let videoURL: URL
+    let srtURL: URL
+    let player: AVPlayer
+
+    var partition: SectionPartition
+    var currentIndex: Int = 0
+    var currentMs: Int = 0
+    var totalMs: Int = 0
+    var isListVisible: Bool = false
+    var saveStatus: AutosaveService.Status = .saved
+
+    private let autosave = AutosaveService()
+    // @ObservationIgnored + nonisolated(unsafe): deinit is nonisolated in Swift 6;
+    // this var is only ever written/read on the main thread.
+    @ObservationIgnored nonisolated(unsafe) private var timeObserver: Any?
+
+    init(videoURL: URL, srtURL: URL, partition: SectionPartition) {
+        self.videoURL = videoURL
+        self.srtURL = srtURL
+        self.partition = partition
+        self.totalMs = partition.duration
+        self.player = AVPlayer(url: videoURL)
+        observePlayhead()
+    }
+
+    deinit {
+        if let timeObserver { player.removeTimeObserver(timeObserver) }
+    }
+
+    private func observePlayhead() {
+        let interval = CMTime(seconds: 0.1, preferredTimescale: 600)
+        timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
+            guard let self else { return }
+            // The callback runs on .main; hop to MainActor to satisfy Swift 6 isolation.
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.currentMs = Int(time.seconds * 1000)
+                self.currentIndex = self.partition.indexContaining(ms: self.currentMs)
+            }
+        }
+    }
+
+    var currentSection: Section { partition.sections[currentIndex] }
+
+    // MARK: Playback
+    func togglePlay() {
+        player.timeControlStatus == .playing ? player.pause() : player.play()
+    }
+    func seek(toMs ms: Int) {
+        let clamped = min(max(ms, 0), totalMs)
+        player.seek(to: CMTime(value: CMTimeValue(clamped), timescale: 1000),
+                    toleranceBefore: .zero, toleranceAfter: .zero)
+        currentMs = clamped
+    }
+    func jog(byMs delta: Int) { seek(toMs: currentMs + delta) }
+
+    // MARK: Navigation
+    func goToSection(_ index: Int) {
+        guard partition.sections.indices.contains(index) else { return }
+        currentIndex = index
+        seek(toMs: partition.sections[index].start)
+    }
+    func previousSection() { goToSection(currentIndex - 1) }
+    func nextSection() { goToSection(currentIndex + 1) }
+
+    // MARK: Editing (delegates to Core, then saves)
+    func cutHere() {
+        partition.cut(atMs: currentMs)
+        currentIndex = partition.indexContaining(ms: currentMs)
+        save()
+    }
+    func moveStart(byMs delta: Int) {
+        guard currentIndex >= 1 else { return }
+        partition.moveBoundary(beforeIndex: currentIndex,
+                               toMs: partition.sections[currentIndex].start + delta)
+        save()
+    }
+    func moveEnd(byMs delta: Int) {
+        let boundary = currentIndex + 1
+        guard boundary < partition.sections.count else { return }
+        partition.moveBoundary(beforeIndex: boundary,
+                               toMs: partition.sections[currentIndex].end + delta)
+        save()
+    }
+    func mergeWithPrevious() {
+        guard currentIndex >= 1 else { return }
+        partition.merge(boundaryBeforeIndex: currentIndex)
+        currentIndex = max(0, currentIndex - 1)
+        save()
+    }
+    func updateCurrentText(_ text: String) {
+        partition.sections[currentIndex].text = text
+        save()
+    }
+
+    func save() {
+        autosave.scheduleSave(sections: partition.sections, to: srtURL) { [weak self] status in
+            self?.saveStatus = status
+        }
+    }
+}
+
+import AVFoundation
+
+func videoDurationMs(_ url: URL) async -> Int {
+    let asset = AVURLAsset(url: url)
+    let duration = (try? await asset.load(.duration)) ?? .zero
+    return max(1, Int(duration.seconds * 1000))
+}
