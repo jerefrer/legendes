@@ -37,6 +37,24 @@ struct EditorView: View {
                 )
 
                 SaveStatusLabel(status: vm.saveStatus)
+
+                HStack(spacing: Theme.Spacing.s) {
+                    Button { vm.previousSection() } label: { Image(systemName: "chevron.left").font(.system(size: 24)) }
+                        .buttonStyle(.plain)
+                    TimelineView(
+                        sections: vm.partition.sections,
+                        totalMs: vm.totalMs,
+                        currentIndex: vm.currentIndex,
+                        onSelect: { vm.goToSection($0) },
+                        onDragBoundary: { beforeIndex, toMs in
+                            vm.partition.moveBoundary(beforeIndex: beforeIndex, toMs: toMs)
+                            vm.save()
+                        }
+                    )
+                    Button { vm.nextSection() } label: { Image(systemName: "chevron.right").font(.system(size: 24)) }
+                        .buttonStyle(.plain)
+                }
+
                 Spacer()
             }
             .padding(Theme.Spacing.l)
