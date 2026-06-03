@@ -11,6 +11,8 @@ enum Theme {
         static let background = Color(white: 0.1)
         static let textOnAccent = Color.white
         static let error = Color.red
+        static let sidePanel = Color(white: 0.08)
+        static let timelineHandle = Color.white
     }
     enum Fonts {
         static let title = Font.system(size: 22, weight: .semibold)

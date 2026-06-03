@@ -14,14 +14,14 @@ struct ShortcutsHelp: View {
     ]
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text("Keyboard shortcuts").font(.system(size: 26, weight: .semibold))
+            Text(Strings.keyboardShortcutsTitle).font(.system(size: 26, weight: .semibold))
             ForEach(rows, id: \.0) { key, desc in
                 HStack {
                     Text(key).font(Theme.Fonts.time).frame(width: 160, alignment: .leading)
                     Text(desc).font(Theme.Fonts.body)
                 }
             }
-            BigButton(title: "Close", action: onClose)
+            BigButton(title: Strings.close, action: onClose)
         }
         .padding(Theme.Spacing.l)
         .frame(minWidth: 480)

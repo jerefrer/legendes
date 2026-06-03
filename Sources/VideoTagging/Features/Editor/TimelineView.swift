@@ -29,9 +29,10 @@ struct TimelineView: View {
                 ForEach(1..<max(sections.count, 1), id: \.self) { i in
                     let bx = xOffset(sections[i].start, width: width)
                     Rectangle()
-                        .fill(Color.white)
+                        .fill(Theme.Colors.timelineHandle)
                         .frame(width: 3)
                         .offset(x: bx - 1.5)
+                        .help("Drag to move the boundary")
                         .gesture(
                             DragGesture()
                                 .onChanged { value in

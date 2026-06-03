@@ -14,6 +14,8 @@ enum Strings {
     static let hideList = "Hide list"
     static let previousSection = "Previous"
     static let nextSection = "Next"
+    static let keyboardShortcutsTitle = "Keyboard shortcuts"
+    static let close = "Close"
 
     static func sectionHeader(_ index: Int, _ start: String, _ end: String) -> String {
         "SECTION \(index + 1)  ·  \(start) – \(end)"
