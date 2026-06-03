@@ -4,6 +4,7 @@ import VideoTaggingCore
 
 struct EditorView: View {
     @Bindable var vm: EditorViewModel
+    @State private var showHelp = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -72,6 +73,26 @@ struct EditorView: View {
             }
         }
         .background(Theme.Colors.background)
+        .focusable()
+        .focusEffectDisabled()
+        .onKeyPress(.space) { vm.togglePlay(); return .handled }
+        .onKeyPress(keys: [.leftArrow]) { p in vm.jog(byMs: p.modifiers.contains(.shift) ? -1000 : -5000); return .handled }
+        .onKeyPress(keys: [.rightArrow]) { p in vm.jog(byMs: p.modifiers.contains(.shift) ? 1000 : 5000); return .handled }
+        .onKeyPress(keys: ["c", "\r"]) { _ in vm.cutHere(); return .handled }
+        .onKeyPress(.upArrow) { vm.previousSection(); return .handled }
+        .onKeyPress(.downArrow) { vm.nextSection(); return .handled }
+        .onKeyPress(keys: [",", "."]) { press in
+            let delta = press.key.character == "," ? -1000 : 1000
+            if press.modifiers.contains(.shift) { vm.moveStart(byMs: delta) }
+            else { vm.moveEnd(byMs: delta) }
+            return .handled
+        }
+        .toolbar {
+            ToolbarItem {
+                Button { showHelp = true } label: { Image(systemName: "questionmark.circle") }
+            }
+        }
+        .sheet(isPresented: $showHelp) { ShortcutsHelp { showHelp = false } }
     }
 }
 
