@@ -85,4 +85,9 @@ import Testing
         #expect(p.indexContaining(ms: 45_000) == 1)
         #expect(p.indexContaining(ms: 30_000) == 1)  // boundary belongs to later
     }
+
+    @Test func indexContainingNegativeMsClampsToZero() {
+        let p = SectionPartition(duration: 60_000)
+        #expect(p.indexContaining(ms: -1000) == 0)
+    }
 }

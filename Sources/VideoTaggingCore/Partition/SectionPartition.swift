@@ -55,6 +55,7 @@ public struct SectionPartition: Equatable, Sendable {
     }
 
     public func indexContaining(ms: Int) -> Int {
+        guard ms >= 0 else { return 0 }
         for (i, s) in sections.enumerated() where ms >= s.start && ms < s.end {
             return i
         }

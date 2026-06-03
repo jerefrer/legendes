@@ -16,6 +16,10 @@ import Testing
         #expect(SRTTime(milliseconds: 3_746_333).srtString == "01:02:26,333")
     }
 
+    @Test func clampsNegativeMilliseconds() {
+        #expect(SRTTime(milliseconds: -5000).milliseconds == 0)
+    }
+
     @Test func displayShortAndLong() {
         #expect(SRTTime(milliseconds: 54_997).displayString == "0:54")
         #expect(SRTTime(milliseconds: 747_000).displayString == "12:27")

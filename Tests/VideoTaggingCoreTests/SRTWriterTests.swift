@@ -17,8 +17,18 @@ import Testing
         2
         00:00:09,000 --> 00:00:12,000
         third
+
         """
         #expect(out == expected)
+    }
+
+    @Test func writesEmptySectionsToEmptyString() {
+        #expect(SRTWriter.write([]) == "")
+        let allEmpty = [
+            Section(start: 0, end: 5_000, text: ""),
+            Section(start: 5_000, end: 10_000, text: ""),
+        ]
+        #expect(SRTWriter.write(allEmpty) == "")
     }
 
     @Test func preservesMultiLineDescriptions() {

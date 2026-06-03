@@ -7,6 +7,6 @@ public enum SRTWriter {
             let text = section.text.trimmingCharacters(in: .whitespacesAndNewlines)
             return "\(i + 1)\n\(start) --> \(end)\n\(text)"
         }
-        return blocks.joined(separator: "\n\n")
+        return blocks.joined(separator: "\n\n") + (blocks.isEmpty ? "" : "\n")
     }
 }
