@@ -1,0 +1,25 @@
+enum Strings {
+    static let appName = "Video Section Tagger"
+    static let cutHere = "Cut here"
+    static let moveStartBack = "◀ Move start"
+    static let moveStartForward = "Move start ▶"
+    static let moveEndBack = "◀ Move end"
+    static let moveEndForward = "Move end ▶"
+    static let mergeWithPrevious = "Merge / delete cut"
+    static let descriptionPlaceholder = "Describe what is shown here…"
+    static let saved = "Saved ✓"
+    static let saving = "Saving…"
+    static let saveFailed = "Could not save"
+    static let showList = "Show list"
+    static let hideList = "Hide list"
+    static let previousSection = "Previous"
+    static let nextSection = "Next"
+
+    enum DropZone {
+        static let title = "Drop a video here"
+        static let subtitle = "Drop a video (and optionally its .srt), or click to choose files."
+        static let videoNotFound = "I found the subtitles but not the video next to them. Drop the video too, or click to pick both files."
+        static let tooManyVideos = "Please drop only one video at a time."
+        static let noUsable = "That doesn't look like a video or a .srt file. Try again."
+    }
+}
