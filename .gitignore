@@ -20,3 +20,7 @@ DerivedData/
 xcuserdata/
 .swiftpm/
 Package.resolved
+
+# Working sample subtitle paired with the gitignored sample video (user data;
+# pristine copy lives in Tests/VideoTaggingCoreTests/Resources/sample.srt)
+/sample.srt
