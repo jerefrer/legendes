@@ -17,7 +17,9 @@ struct VideoTaggingApp: App {
             RootView()
                 .frame(minWidth: 900, minHeight: 700)
                 .environment(settings)
+                .environment(\.theme, Theme(scale: settings.interfaceSize.scale))
                 .preferredColorScheme(settings.appearance.colorScheme)
+                .animation(.easeInOut(duration: 0.2), value: settings.interfaceSize)
         }
         .windowStyle(.titleBar)
     }
