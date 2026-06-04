@@ -154,6 +154,14 @@ final class EditorViewModel {
         currentIndex = max(0, currentIndex - 1)
         save()
     }
+    func mergeWithNext() {
+        let boundary = currentIndex + 1
+        guard boundary < partition.sections.count else { return }
+        recordUndo()
+        partition.merge(boundaryBeforeIndex: boundary)
+        // current absorbs next; currentIndex stays valid.
+        save()
+    }
     func updateCurrentText(_ text: String) {
         guard partition.sections.indices.contains(currentIndex) else { return }
         partition.sections[currentIndex].text = text

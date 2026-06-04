@@ -1,8 +1,10 @@
 import SwiftUI
 
 struct BigButton: View {
+    enum Kind { case primary, neutral, destructive }
+
     let title: String
-    var prominent: Bool = false
+    var kind: Kind = .neutral
     var systemImage: String? = nil
     let action: () -> Void
 
@@ -19,17 +21,17 @@ struct BigButton: View {
             .font(theme.button)
             .padding(.vertical, theme.s + 6)
             .padding(.horizontal, theme.m)
-            .frame(maxWidth: prominent ? .infinity : nil, minHeight: theme.controlHeight)
-            .foregroundStyle(prominent ? theme.textOnAccent : theme.textPrimary)
+            .frame(minHeight: theme.controlHeight)
+            .foregroundStyle(foreground)
             .background {
                 RoundedRectangle(cornerRadius: theme.radius, style: .continuous)
-                    .fill(prominent ? AnyShapeStyle(theme.accent) : AnyShapeStyle(.regularMaterial))
+                    .fill(fill)
             }
             .overlay {
                 RoundedRectangle(cornerRadius: theme.radius, style: .continuous)
-                    .strokeBorder(theme.separator, lineWidth: prominent ? 0 : 1)
+                    .strokeBorder(border, lineWidth: kind == .primary ? 0 : 1)
             }
-            .shadow(color: .black.opacity(prominent && isEnabled ? 0.18 : 0), radius: 8, y: 3)
+            .shadow(color: .black.opacity(kind == .primary && isEnabled ? 0.18 : 0), radius: 8, y: 3)
             .brightness(hovering && isEnabled ? 0.05 : 0)
             .opacity(isEnabled ? 1 : 0.4)
             .contentShape(RoundedRectangle(cornerRadius: theme.radius, style: .continuous))
@@ -37,5 +39,29 @@ struct BigButton: View {
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.12), value: hovering)
+    }
+
+    private var foreground: Color {
+        switch kind {
+        case .primary: theme.textOnAccent
+        case .neutral: theme.textPrimary
+        case .destructive: theme.error
+        }
+    }
+
+    private var fill: AnyShapeStyle {
+        switch kind {
+        case .primary: AnyShapeStyle(theme.accent)
+        case .neutral: AnyShapeStyle(.regularMaterial)
+        case .destructive: AnyShapeStyle(theme.error.opacity(0.12))
+        }
+    }
+
+    private var border: Color {
+        switch kind {
+        case .primary: .clear
+        case .neutral: theme.separator
+        case .destructive: theme.error.opacity(0.4)
+        }
     }
 }

@@ -17,10 +17,10 @@ struct EditorView: View {
         HSplitView {
             VStack(spacing: 0) {
                 GeometryReader { geo in
-                    // Reserve room below the video for the transport + a usable
-                    // slice of the card, so the video can never cover them. The
-                    // card area scrolls if the window is too short for everything.
-                    let reserved = 260 * theme.scale
+                    // Reserve enough room below the video for the transport and
+                    // the full card, so growing the video can never cover them.
+                    // On a window too short to fit everything the card scrolls.
+                    let reserved = 490 * theme.scale
                     let maxVideo = max(minVideoHeight, geo.size.height - reserved)
                     let videoH = min(max(videoHeight + videoDrag, minVideoHeight), maxVideo)
 
@@ -35,7 +35,10 @@ struct EditorView: View {
 
                         ResizeHandle()
                             .gesture(
-                                DragGesture()
+                                // Global coordinate space: the handle moves as the
+                                // video resizes, so a local-space translation would
+                                // feed back and make the height oscillate.
+                                DragGesture(coordinateSpace: .global)
                                     .updating($videoDrag) { value, state, _ in state = value.translation.height }
                                     .onEnded { value in
                                         videoHeight = min(max(videoHeight + value.translation.height, minVideoHeight), maxVideo)
@@ -61,7 +64,8 @@ struct EditorView: View {
                                     section: vm.currentSection,
                                     canMoveStart: vm.currentIndex >= 1,
                                     canMoveEnd: vm.currentIndex + 1 < vm.partition.sections.count,
-                                    canMerge: vm.currentIndex >= 1,
+                                    canMergePrevious: vm.currentIndex >= 1,
+                                    canMergeNext: vm.currentIndex + 1 < vm.partition.sections.count,
                                     text: Binding(
                                         get: { vm.currentSection.text },
                                         set: { vm.updateCurrentText($0) }
@@ -69,7 +73,8 @@ struct EditorView: View {
                                     onCut: vm.cutHere,
                                     onMoveStart: vm.moveStart(byMs:),
                                     onMoveEnd: vm.moveEnd(byMs:),
-                                    onMerge: vm.mergeWithPrevious,
+                                    onMergePrevious: vm.mergeWithPrevious,
+                                    onMergeNext: vm.mergeWithNext,
                                     onBeginEditing: { vm.beginTextEditing() },
                                     onEndEditing: { vm.endTextEditing() }
                                 )

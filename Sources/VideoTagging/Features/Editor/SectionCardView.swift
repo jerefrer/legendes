@@ -6,12 +6,14 @@ struct SectionCardView: View {
     let section: VideoSection
     let canMoveStart: Bool
     let canMoveEnd: Bool
-    let canMerge: Bool
+    let canMergePrevious: Bool
+    let canMergeNext: Bool
     let text: Binding<String>
     let onCut: () -> Void
     let onMoveStart: (Int) -> Void
     let onMoveEnd: (Int) -> Void
-    let onMerge: () -> Void
+    let onMergePrevious: () -> Void
+    let onMergeNext: () -> Void
     let onBeginEditing: () -> Void
     let onEndEditing: () -> Void
 
@@ -43,20 +45,41 @@ struct SectionCardView: View {
                     focused ? onBeginEditing() : onEndEditing()
                 }
 
-            BigButton(title: Strings.cutHere, prominent: true, systemImage: "scissors", action: onCut)
+            // Primary action — visible but not full width.
+            HStack {
+                Spacer(minLength: 0)
+                BigButton(title: Strings.cutHere, kind: .primary, systemImage: "scissors", action: onCut)
+                    .frame(maxWidth: 440)
+                Spacer(minLength: 0)
+            }
 
-            HStack(spacing: theme.s) {
+            // Boundary nudges: start on the left, end on the right (spatial mapping).
+            HStack(alignment: .bottom, spacing: theme.l) {
                 if canMoveStart {
-                    BigButton(title: Strings.moveStartBack) { onMoveStart(-1000) }
-                    BigButton(title: Strings.moveStartForward) { onMoveStart(1000) }
+                    boundaryGroup(title: Strings.sectionStart,
+                                  onEarlier: { onMoveStart(-1000) },
+                                  onLater: { onMoveStart(1000) })
                 }
+                Spacer(minLength: 0)
                 if canMoveEnd {
-                    BigButton(title: Strings.moveEndBack) { onMoveEnd(-1000) }
-                    BigButton(title: Strings.moveEndForward) { onMoveEnd(1000) }
+                    boundaryGroup(title: Strings.sectionEnd,
+                                  onEarlier: { onMoveEnd(-1000) },
+                                  onLater: { onMoveEnd(1000) })
                 }
             }
-            if canMerge {
-                BigButton(title: Strings.mergeWithPrevious, systemImage: "arrow.triangle.merge", action: onMerge)
+
+            // Removing a cut — explicit about which neighbour it joins.
+            if canMergePrevious || canMergeNext {
+                HStack(spacing: theme.s) {
+                    if canMergePrevious {
+                        BigButton(title: Strings.mergeWithPrevious, kind: .destructive,
+                                  systemImage: "arrow.up.to.line.compact", action: onMergePrevious)
+                    }
+                    if canMergeNext {
+                        BigButton(title: Strings.mergeWithNext, kind: .destructive,
+                                  systemImage: "arrow.down.to.line.compact", action: onMergeNext)
+                    }
+                }
             }
         }
         .padding(theme.l)
@@ -64,5 +87,19 @@ struct SectionCardView: View {
         .overlay(RoundedRectangle(cornerRadius: theme.radius, style: .continuous)
             .strokeBorder(theme.separator, lineWidth: 1))
         .shadow(color: .black.opacity(0.12), radius: 16, y: 6)
+    }
+
+    private func boundaryGroup(title: String, onEarlier: @escaping () -> Void, onLater: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: theme.xs) {
+            Text(title)
+                .font(theme.label)
+                .textCase(.uppercase)
+                .kerning(0.5)
+                .foregroundStyle(theme.textSecondary)
+            HStack(spacing: theme.xs) {
+                BigButton(title: Strings.nudgeEarlier, action: onEarlier)
+                BigButton(title: Strings.nudgeLater, action: onLater)
+            }
+        }
     }
 }
