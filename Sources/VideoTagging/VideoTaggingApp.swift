@@ -15,7 +15,7 @@ struct VideoTaggingApp: App {
     var body: some Scene {
         WindowGroup(Strings.appName) {
             RootView()
-                .frame(minWidth: 900, minHeight: 780)
+                .frame(minWidth: 900, minHeight: 820)
                 .environment(settings)
                 .environment(\.theme, Theme(scale: settings.interfaceSize.scale))
                 .onChange(of: settings.appearance, initial: true) { _, mode in

@@ -1,27 +1,47 @@
 import SwiftUI
+import AppKit
 import VideoTaggingCore
 
 struct EditorView: View {
     @Bindable var vm: EditorViewModel
     @State private var showHelp = false
+    @State private var videoHeight: CGFloat = 300
+    @GestureState private var videoDrag: CGFloat = 0
     @Environment(\.theme) private var theme
     @Environment(AppSettings.self) private var settings
+
+    private let minVideoHeight: CGFloat = 160
 
     var body: some View {
         @Bindable var settings = settings
         HSplitView {
             VStack(spacing: 0) {
-                // Draggable divider lets the user set the video height; the
-                // editing area below fills the rest (the description grows).
-                VSplitView {
-                    PlayerView(player: vm.player)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .clipShape(RoundedRectangle(cornerRadius: theme.radiusSmall, style: .continuous))
-                        .padding(theme.l)
-                        .frame(minHeight: 160)
-                        .clipped()
+                GeometryReader { geo in
+                    // Reserve room below the video for the transport + a usable
+                    // slice of the card, so the video can never cover them. The
+                    // card area scrolls if the window is too short for everything.
+                    let reserved = 260 * theme.scale
+                    let maxVideo = max(minVideoHeight, geo.size.height - reserved)
+                    let videoH = min(max(videoHeight + videoDrag, minVideoHeight), maxVideo)
 
-                    VStack(spacing: theme.m) {
+                    VStack(spacing: 0) {
+                        PlayerView(player: vm.player)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: videoH)
+                            .clipShape(RoundedRectangle(cornerRadius: theme.radiusSmall, style: .continuous))
+                            .clipped()
+                            .padding(.horizontal, theme.l)
+                            .padding(.top, theme.l)
+
+                        ResizeHandle()
+                            .gesture(
+                                DragGesture()
+                                    .updating($videoDrag) { value, state, _ in state = value.translation.height }
+                                    .onEnded { value in
+                                        videoHeight = min(max(videoHeight + value.translation.height, minVideoHeight), maxVideo)
+                                    }
+                            )
+
                         TransportBar(
                             isPlaying: vm.isPlaying,
                             currentMs: vm.currentMs,
@@ -29,30 +49,35 @@ struct EditorView: View {
                             onTogglePlay: { vm.togglePlay() },
                             onScrub: { vm.seek(toMs: $0) }
                         )
+                        .padding(.horizontal, theme.l)
+                        .padding(.top, theme.s)
 
-                        SectionCardView(
-                            index: vm.currentIndex,
-                            section: vm.currentSection,
-                            canMoveStart: vm.currentIndex >= 1,
-                            canMoveEnd: vm.currentIndex + 1 < vm.partition.sections.count,
-                            canMerge: vm.currentIndex >= 1,
-                            text: Binding(
-                                get: { vm.currentSection.text },
-                                set: { vm.updateCurrentText($0) }
-                            ),
-                            onCut: vm.cutHere,
-                            onMoveStart: vm.moveStart(byMs:),
-                            onMoveEnd: vm.moveEnd(byMs:),
-                            onMerge: vm.mergeWithPrevious,
-                            onBeginEditing: { vm.beginTextEditing() },
-                            onEndEditing: { vm.endTextEditing() }
-                        )
-                        .frame(maxHeight: .infinity)
-
-                        SaveStatusLabel(status: vm.saveStatus)
+                        // Card fills the remaining space (description grows); if
+                        // there isn't enough room it scrolls instead of overlapping.
+                        GeometryReader { lowerGeo in
+                            ScrollView {
+                                SectionCardView(
+                                    index: vm.currentIndex,
+                                    section: vm.currentSection,
+                                    canMoveStart: vm.currentIndex >= 1,
+                                    canMoveEnd: vm.currentIndex + 1 < vm.partition.sections.count,
+                                    canMerge: vm.currentIndex >= 1,
+                                    text: Binding(
+                                        get: { vm.currentSection.text },
+                                        set: { vm.updateCurrentText($0) }
+                                    ),
+                                    onCut: vm.cutHere,
+                                    onMoveStart: vm.moveStart(byMs:),
+                                    onMoveEnd: vm.moveEnd(byMs:),
+                                    onMerge: vm.mergeWithPrevious,
+                                    onBeginEditing: { vm.beginTextEditing() },
+                                    onEndEditing: { vm.endTextEditing() }
+                                )
+                                .frame(minHeight: max(0, lowerGeo.size.height - 2 * theme.l), maxHeight: .infinity)
+                                .padding(theme.l)
+                            }
+                        }
                     }
-                    .padding(theme.l)
-                    .frame(minHeight: 300 * theme.scale)
                 }
 
                 // Pinned timeline: always reachable, never scrolled away.
@@ -125,6 +150,8 @@ struct EditorView: View {
                 .disabled(!vm.canRedo)
             }
             ToolbarItemGroup(placement: .primaryAction) {
+                SaveStatusBadge(status: vm.saveStatus)
+
                 Picker("Interface size", selection: $settings.interfaceSize) {
                     Text("A").font(.system(size: 11)).tag(InterfaceSize.comfortable)
                     Text("A").font(.system(size: 14)).tag(InterfaceSize.large)
@@ -155,17 +182,43 @@ struct EditorView: View {
     }
 }
 
-struct SaveStatusLabel: View {
+/// Draggable handle between the video and the editing area.
+private struct ResizeHandle: View {
+    @Environment(\.theme) private var theme
+
+    var body: some View {
+        ZStack {
+            Color.clear.frame(height: 14).contentShape(Rectangle())
+            Capsule().fill(theme.textSecondary.opacity(0.4)).frame(width: 44, height: 4)
+        }
+        .frame(maxWidth: .infinity)
+        .onHover { inside in
+            if inside { NSCursor.resizeUpDown.set() } else { NSCursor.arrow.set() }
+        }
+    }
+}
+
+/// Compact save indicator shown in the toolbar, next to the size controls.
+private struct SaveStatusBadge: View {
     let status: AutosaveService.Status
     @Environment(\.theme) private var theme
 
     var body: some View {
-        let (text, color): (String, Color) = switch status {
-            case .saved: (Strings.saved, theme.textSecondary)
-            case .saving: (Strings.saving, theme.textSecondary)
-            case .idle: ("", .clear)
-            case .failed(let m): ("\(Strings.saveFailed): \(m)", theme.error)
+        switch status {
+        case .saved:
+            Label(Strings.saved, systemImage: "checkmark.circle.fill")
+                .labelStyle(.titleAndIcon)
+                .foregroundStyle(theme.textSecondary)
+        case .saving:
+            Label(Strings.saving, systemImage: "arrow.triangle.2.circlepath")
+                .labelStyle(.titleAndIcon)
+                .foregroundStyle(theme.textSecondary)
+        case .failed:
+            Label(Strings.saveFailed, systemImage: "exclamationmark.triangle.fill")
+                .labelStyle(.titleAndIcon)
+                .foregroundStyle(theme.error)
+        case .idle:
+            EmptyView()
         }
-        Text(text).font(theme.label).foregroundStyle(color)
     }
 }
