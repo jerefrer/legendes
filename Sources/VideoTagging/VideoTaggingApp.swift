@@ -10,11 +10,14 @@ enum PendingSaveFlusher {
 @main
 struct VideoTaggingApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
+    @State private var settings = AppSettings()
 
     var body: some Scene {
         WindowGroup(Strings.appName) {
             RootView()
                 .frame(minWidth: 900, minHeight: 700)
+                .environment(settings)
+                .preferredColorScheme(settings.appearance.colorScheme)
         }
         .windowStyle(.titleBar)
     }
