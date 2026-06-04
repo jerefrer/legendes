@@ -18,6 +18,11 @@ struct EditorView: View {
         @Bindable var settings = settings
         HSplitView {
             VStack(spacing: 0) {
+                // Centered save status as plain content text (no toolbar capsule).
+                SaveStatusBadge(status: vm.saveStatus)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, theme.s)
+
                 GeometryReader { geo in
                     // Reserve enough room below the video for the transport and
                     // the full card, so growing the video can never cover them.
@@ -180,10 +185,6 @@ struct EditorView: View {
                     Label(Strings.redo, systemImage: "arrow.uturn.forward")
                 }
                 .disabled(!vm.canRedo)
-            }
-            // Status area: plain text, no toolbar capsule (unlike grouped items).
-            ToolbarItem(placement: .status) {
-                SaveStatusBadge(status: vm.saveStatus)
             }
             ToolbarItemGroup(placement: .primaryAction) {
                 Picker("Interface size", selection: $settings.interfaceSize) {

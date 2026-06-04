@@ -61,7 +61,8 @@ struct RootView: View {
 
     private var windowTitle: String {
         switch router.screen {
-        case .dropZone: Strings.appName
+        // No app name in the title bar before a video is open.
+        case .dropZone: ""
         case .editor(let vm): vm.videoURL.deletingPathExtension().lastPathComponent
         }
     }
