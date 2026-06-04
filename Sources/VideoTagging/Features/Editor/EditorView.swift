@@ -1,5 +1,4 @@
 import SwiftUI
-import AVKit
 import VideoTaggingCore
 
 struct EditorView: View {
@@ -15,7 +14,7 @@ struct EditorView: View {
                               systemImage: "sidebar.right") { vm.isListVisible.toggle() }
                 }
 
-                VideoPlayer(player: vm.player)
+                PlayerView(player: vm.player)
                     .frame(minHeight: 260)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
 
