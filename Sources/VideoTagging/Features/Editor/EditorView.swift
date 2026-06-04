@@ -18,7 +18,8 @@ struct EditorView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .clipShape(RoundedRectangle(cornerRadius: theme.radiusSmall, style: .continuous))
                         .padding(theme.l)
-                        .frame(minHeight: 140)
+                        .frame(minHeight: 160)
+                        .clipped()
 
                     VStack(spacing: theme.m) {
                         TransportBar(
@@ -51,7 +52,7 @@ struct EditorView: View {
                         SaveStatusLabel(status: vm.saveStatus)
                     }
                     .padding(theme.l)
-                    .frame(minHeight: 260)
+                    .frame(minHeight: 300 * theme.scale)
                 }
 
                 // Pinned timeline: always reachable, never scrolled away.
