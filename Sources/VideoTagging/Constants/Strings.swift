@@ -1,5 +1,5 @@
 enum Strings {
-    static let appName = "Video Section Tagger"
+    static let appName = "Légendes"
     static let cutHere = "Cut here"
     static let sectionStart = "Start"
     static let sectionEnd = "End"

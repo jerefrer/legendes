@@ -13,7 +13,7 @@ struct VideoTaggingApp: App {
     @State private var settings = AppSettings()
 
     var body: some Scene {
-        WindowGroup(Strings.appName) {
+        WindowGroup {
             RootView()
                 .frame(minWidth: 1160, minHeight: 780)
                 .environment(settings)
@@ -43,12 +43,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 struct RootView: View {
     @State private var router = AppRouter()
+
     var body: some View {
+        Group {
+            switch router.screen {
+            case .dropZone:
+                DropZoneView(onOpen: { router.open(urls: $0) }, errorMessage: router.errorMessage)
+            case .editor(let vm):
+                EditorView(vm: vm)
+            }
+        }
+        // macOS convention: the title bar shows the current document; the app
+        // name ("Légendes") lives in the menu bar. Show the file being tagged
+        // while editing, and the app name on the launch screen.
+        .navigationTitle(windowTitle)
+    }
+
+    private var windowTitle: String {
         switch router.screen {
-        case .dropZone:
-            DropZoneView(onOpen: { router.open(urls: $0) }, errorMessage: router.errorMessage)
-        case .editor(let vm):
-            EditorView(vm: vm)
+        case .dropZone: Strings.appName
+        case .editor(let vm): vm.videoURL.deletingPathExtension().lastPathComponent
         }
     }
 }
