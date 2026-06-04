@@ -13,21 +13,16 @@ struct SectionListPanel: View {
                 VStack(spacing: theme.s) {
                     ForEach(Array(sections.enumerated()), id: \.element.id) { i, s in
                         Button { onSelect(i) } label: {
-                            HStack(spacing: theme.s) {
-                                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                                    .fill(i == currentIndex ? theme.accent : (s.isEmpty ? theme.gap.opacity(0.6) : theme.separator))
-                                    .frame(width: 4)
-                                VStack(alignment: .leading, spacing: theme.xs) {
-                                    Text("\(i + 1) · \(SRTTime(milliseconds: s.start).displayString)–\(SRTTime(milliseconds: s.end).displayString)")
-                                        .font(theme.label)
-                                        .foregroundStyle(theme.textSecondary)
-                                    Text(s.isEmpty ? Strings.descriptionPlaceholder : s.text)
-                                        .font(theme.listItem)
-                                        .foregroundStyle(s.isEmpty ? theme.textSecondary : theme.textPrimary)
-                                        .lineLimit(2)
-                                }
-                                Spacer(minLength: 0)
+                            VStack(alignment: .leading, spacing: theme.xs) {
+                                Text("\(i + 1) · \(SRTTime(milliseconds: s.start).displayString)–\(SRTTime(milliseconds: s.end).displayString)")
+                                    .font(theme.label)
+                                    .foregroundStyle(i == currentIndex ? theme.accent : theme.textSecondary)
+                                Text(s.isEmpty ? Strings.descriptionPlaceholder : s.text)
+                                    .font(theme.listItem)
+                                    .foregroundStyle(s.isEmpty ? theme.textSecondary : theme.textPrimary)
+                                    .lineLimit(2)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(theme.s + 4)
                             .background(RoundedRectangle(cornerRadius: theme.radiusSmall, style: .continuous)
                                 .fill(i == currentIndex ? AnyShapeStyle(theme.accent.opacity(0.18)) : AnyShapeStyle(.regularMaterial)))

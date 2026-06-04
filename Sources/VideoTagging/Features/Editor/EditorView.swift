@@ -5,52 +5,55 @@ struct EditorView: View {
     @Bindable var vm: EditorViewModel
     @State private var showHelp = false
     @Environment(\.theme) private var theme
+    @Environment(AppSettings.self) private var settings
 
     var body: some View {
+        @Bindable var settings = settings
         HStack(spacing: 0) {
-            VStack(spacing: theme.m) {
-                TopBar(
-                    canUndo: vm.canUndo, canRedo: vm.canRedo,
-                    onUndo: { vm.undo() }, onRedo: { vm.redo() },
-                    isListVisible: vm.isListVisible,
-                    onToggleList: { withAnimation(.easeInOut(duration: 0.2)) { vm.isListVisible.toggle() } }
-                )
+            VStack(spacing: 0) {
+                // Scrollable middle: video + transport + section card stay reachable
+                // at any interface size.
+                ScrollView {
+                    VStack(spacing: theme.m) {
+                        PlayerView(player: vm.player)
+                            .frame(minHeight: 260)
+                            .clipShape(RoundedRectangle(cornerRadius: theme.radiusSmall, style: .continuous))
 
-                PlayerView(player: vm.player)
-                    .frame(minHeight: 260)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                        TransportBar(
+                            isPlaying: vm.isPlaying,
+                            currentMs: vm.currentMs,
+                            totalMs: vm.totalMs,
+                            onTogglePlay: { vm.togglePlay() },
+                            onScrub: { vm.seek(toMs: $0) }
+                        )
 
-                TransportBar(
-                    isPlaying: vm.isPlaying,
-                    currentMs: vm.currentMs,
-                    totalMs: vm.totalMs,
-                    onTogglePlay: { vm.togglePlay() },
-                    onScrub: { vm.seek(toMs: $0) }
-                )
+                        SectionCardView(
+                            index: vm.currentIndex,
+                            section: vm.currentSection,
+                            canMoveStart: vm.currentIndex >= 1,
+                            canMoveEnd: vm.currentIndex + 1 < vm.partition.sections.count,
+                            canMerge: vm.currentIndex >= 1,
+                            text: Binding(
+                                get: { vm.currentSection.text },
+                                set: { vm.updateCurrentText($0) }
+                            ),
+                            onCut: vm.cutHere,
+                            onMoveStart: vm.moveStart(byMs:),
+                            onMoveEnd: vm.moveEnd(byMs:),
+                            onMerge: vm.mergeWithPrevious,
+                            onBeginEditing: { vm.beginTextEditing() },
+                            onEndEditing: { vm.endTextEditing() }
+                        )
 
-                SectionCardView(
-                    index: vm.currentIndex,
-                    section: vm.currentSection,
-                    canMoveStart: vm.currentIndex >= 1,
-                    canMoveEnd: vm.currentIndex + 1 < vm.partition.sections.count,
-                    canMerge: vm.currentIndex >= 1,
-                    text: Binding(
-                        get: { vm.currentSection.text },
-                        set: { vm.updateCurrentText($0) }
-                    ),
-                    onCut: vm.cutHere,
-                    onMoveStart: vm.moveStart(byMs:),
-                    onMoveEnd: vm.moveEnd(byMs:),
-                    onMerge: vm.mergeWithPrevious,
-                    onBeginEditing: { vm.beginTextEditing() },
-                    onEndEditing: { vm.endTextEditing() }
-                )
+                        SaveStatusLabel(status: vm.saveStatus)
+                    }
+                    .padding(theme.l)
+                }
 
-                SaveStatusLabel(status: vm.saveStatus)
-
+                // Pinned timeline: always reachable, never scrolled away.
                 HStack(spacing: theme.s) {
                     Button { vm.previousSection() } label: {
-                        Image(systemName: "chevron.left").font(.system(size: 24))
+                        Image(systemName: "chevron.left").font(.system(size: 22 * theme.scale))
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(theme.textSecondary)
@@ -65,15 +68,15 @@ struct EditorView: View {
                     )
 
                     Button { vm.nextSection() } label: {
-                        Image(systemName: "chevron.right").font(.system(size: 24))
+                        Image(systemName: "chevron.right").font(.system(size: 22 * theme.scale))
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(theme.textSecondary)
                 }
-
-                Spacer()
+                .padding(.horizontal, theme.l)
+                .padding(.vertical, theme.s)
+                .background(.bar)
             }
-            .padding(theme.l)
 
             if vm.isListVisible {
                 SectionListPanel(sections: vm.partition.sections,
@@ -105,8 +108,41 @@ struct EditorView: View {
         .onAppear { PendingSaveFlusher.flush = { vm.flushSave() } }
         .onDisappear { vm.flushSave(); PendingSaveFlusher.flush = {} }
         .toolbar {
-            ToolbarItem {
+            ToolbarItemGroup(placement: .navigation) {
+                Button(action: { vm.undo() }) {
+                    Label(Strings.undo, systemImage: "arrow.uturn.backward")
+                }
+                .disabled(!vm.canUndo)
+                Button(action: { vm.redo() }) {
+                    Label(Strings.redo, systemImage: "arrow.uturn.forward")
+                }
+                .disabled(!vm.canRedo)
+            }
+            ToolbarItemGroup(placement: .primaryAction) {
+                Picker("Interface size", selection: $settings.interfaceSize) {
+                    Text("A").font(.system(size: 11)).tag(InterfaceSize.comfortable)
+                    Text("A").font(.system(size: 14)).tag(InterfaceSize.large)
+                    Text("A").font(.system(size: 17)).tag(InterfaceSize.extraLarge)
+                }
+                .pickerStyle(.segmented)
+                .help("Interface size")
+
+                Picker("Appearance", selection: $settings.appearance) {
+                    Image(systemName: "circle.lefthalf.filled").tag(AppearanceMode.system)
+                    Image(systemName: "sun.max").tag(AppearanceMode.light)
+                    Image(systemName: "moon").tag(AppearanceMode.dark)
+                }
+                .pickerStyle(.segmented)
+                .help("Appearance")
+
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { vm.isListVisible.toggle() }
+                } label: {
+                    Label(vm.isListVisible ? Strings.hideList : Strings.showList, systemImage: "sidebar.right")
+                }
+
                 Button { showHelp = true } label: { Image(systemName: "questionmark.circle") }
+                    .help(Strings.keyboardShortcutsTitle)
             }
         }
         .sheet(isPresented: $showHelp) { ShortcutsHelp { showHelp = false } }

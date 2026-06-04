@@ -12,7 +12,7 @@ public enum InterfaceSize: String, CaseIterable, Sendable {
         switch self {
         case .comfortable: 1.0
         case .large: 1.2
-        case .extraLarge: 1.45
+        case .extraLarge: 1.3
         }
     }
 

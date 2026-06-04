@@ -5,7 +5,7 @@ import Testing
     @Test func scaleValues() {
         #expect(InterfaceSize.comfortable.scale == 1.0)
         #expect(InterfaceSize.large.scale == 1.2)
-        #expect(InterfaceSize.extraLarge.scale == 1.45)
+        #expect(InterfaceSize.extraLarge.scale == 1.3)
     }
     @Test func roundTripsRawValue() {
         for size in InterfaceSize.allCases {
