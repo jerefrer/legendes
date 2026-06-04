@@ -118,6 +118,7 @@ final class EditorViewModel {
     // MARK: Text editing focus
     // Text editing: record ONE undo step at focus-in, before any keystroke.
     func beginTextEditing() {
+        guard !isEditingText else { return }
         recordUndo()
         player.pause()
         isEditingText = true
