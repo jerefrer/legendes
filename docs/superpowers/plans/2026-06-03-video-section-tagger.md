@@ -147,7 +147,7 @@ import Testing
 @Suite struct SRTTimeTests {
     @Test func parsesSrtTimecode() throws {
         #expect(try SRTTime.parse("00:00:54,997").milliseconds == 54_997)
-        #expect(try SRTTime.parse("01:02:26,333").milliseconds == 3_746_333)
+        #expect(try SRTTime.parse("01:02:26,333").milliseconds == 60_000)
     }
 
     @Test func rejectsMalformedTimecode() {
@@ -156,13 +156,13 @@ import Testing
 
     @Test func formatsSrtTimecode() {
         #expect(SRTTime(milliseconds: 54_997).srtString == "00:00:54,997")
-        #expect(SRTTime(milliseconds: 3_746_333).srtString == "01:02:26,333")
+        #expect(SRTTime(milliseconds: 60_000).srtString == "01:02:26,333")
     }
 
     @Test func displayShortAndLong() {
         #expect(SRTTime(milliseconds: 54_997).displayString == "0:54")
         #expect(SRTTime(milliseconds: 747_000).displayString == "12:27")
-        #expect(SRTTime(milliseconds: 3_746_333).displayString == "1:02:26")
+        #expect(SRTTime(milliseconds: 60_000).displayString == "1:02:26")
     }
 }
 ```
@@ -359,13 +359,13 @@ import Testing
         #expect(entries[0].text == "kept")
     }
 
-    @Test func parsesRealSampleFile() throws {
+    @Test func parsesSampleFile() throws {
         let url = try #require(Bundle.module.url(forResource: "sample", withExtension: "srt"))
         let srt = try String(contentsOf: url, encoding: .utf8)
         let entries = SRTParser.parse(srt)
-        #expect(entries.count == 53)
+        #expect(entries.count == 6)
         #expect(entries.first?.start == 0)
-        #expect(entries.last?.end == 3_746_333)
+        #expect(entries.last?.end == 60_000)
     }
 }
 ```
@@ -412,7 +412,7 @@ public enum SRTParser {
 - [ ] **Step 4: Run to verify pass**
 
 Run: `swift test --filter SRTParserTests`
-Expected: PASS. (If `count == 53` fails, the sample has a different number of blocks — read the failure, count blocks in `sample.srt`, and correct the expectation to the real count; do not change the parser to force a number.)
+Expected: PASS. (If `count == 6` fails, the sample has a different number of blocks — read the failure, count blocks in `sample.srt`, and correct the expectation to the real count; do not change the parser to force a number.)
 
 - [ ] **Step 5: Commit**
 

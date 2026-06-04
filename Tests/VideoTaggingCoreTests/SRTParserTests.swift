@@ -60,12 +60,13 @@ import Testing
         #expect(SRTParser.parse("") == [])
     }
 
-    @Test func parsesRealSampleFile() throws {
+    @Test func parsesSampleFile() throws {
         let url = try #require(Bundle.module.url(forResource: "sample", withExtension: "srt"))
         let srt = try String(contentsOf: url, encoding: .utf8)
         let entries = SRTParser.parse(srt)
-        #expect(entries.count == 53)
+        #expect(entries.count == 6)
         #expect(entries.first?.start == 0)
-        #expect(entries.last?.end == 3_746_333)
+        #expect(entries[2].text == "Close-up of the speaker\nAudience visible behind")
+        #expect(entries.last?.end == 60_000)
     }
 }
