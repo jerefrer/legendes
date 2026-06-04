@@ -181,9 +181,11 @@ struct EditorView: View {
                 }
                 .disabled(!vm.canRedo)
             }
-            ToolbarItemGroup(placement: .primaryAction) {
+            // Status area: plain text, no toolbar capsule (unlike grouped items).
+            ToolbarItem(placement: .status) {
                 SaveStatusBadge(status: vm.saveStatus)
-
+            }
+            ToolbarItemGroup(placement: .primaryAction) {
                 Picker("Interface size", selection: $settings.interfaceSize) {
                     Text("A").font(.system(size: 11)).tag(InterfaceSize.comfortable)
                     Text("A").font(.system(size: 14)).tag(InterfaceSize.large)
