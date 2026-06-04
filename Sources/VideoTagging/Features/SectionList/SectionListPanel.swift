@@ -42,8 +42,7 @@ struct SectionListPanel: View {
                 }
             }
         }
-        .frame(width: 340 * theme.scale)
+        .frame(maxWidth: .infinity)
         .background(.ultraThinMaterial)
-        .overlay(alignment: .leading) { Rectangle().fill(theme.separator).frame(width: 1) }
     }
 }

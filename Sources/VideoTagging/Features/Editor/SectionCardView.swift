@@ -31,7 +31,7 @@ struct SectionCardView: View {
             TextEditor(text: text)
                 .font(theme.body)
                 .scrollContentBackground(.hidden)
-                .frame(minHeight: 90 * theme.scale)
+                .frame(minHeight: 80 * theme.scale, maxHeight: .infinity)
                 .padding(theme.s)
                 .background(RoundedRectangle(cornerRadius: theme.radiusSmall, style: .continuous)
                     .fill(.background.opacity(0.5)))

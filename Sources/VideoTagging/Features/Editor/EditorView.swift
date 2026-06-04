@@ -9,16 +9,18 @@ struct EditorView: View {
 
     var body: some View {
         @Bindable var settings = settings
-        HStack(spacing: 0) {
+        HSplitView {
             VStack(spacing: 0) {
-                // Scrollable middle: video + transport + section card stay reachable
-                // at any interface size.
-                ScrollView {
-                    VStack(spacing: theme.m) {
-                        PlayerView(player: vm.player)
-                            .frame(minHeight: 260)
-                            .clipShape(RoundedRectangle(cornerRadius: theme.radiusSmall, style: .continuous))
+                // Draggable divider lets the user set the video height; the
+                // editing area below fills the rest (the description grows).
+                VSplitView {
+                    PlayerView(player: vm.player)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .clipShape(RoundedRectangle(cornerRadius: theme.radiusSmall, style: .continuous))
+                        .padding(theme.l)
+                        .frame(minHeight: 140)
 
+                    VStack(spacing: theme.m) {
                         TransportBar(
                             isPlaying: vm.isPlaying,
                             currentMs: vm.currentMs,
@@ -44,10 +46,12 @@ struct EditorView: View {
                             onBeginEditing: { vm.beginTextEditing() },
                             onEndEditing: { vm.endTextEditing() }
                         )
+                        .frame(maxHeight: .infinity)
 
                         SaveStatusLabel(status: vm.saveStatus)
                     }
                     .padding(theme.l)
+                    .frame(minHeight: 260)
                 }
 
                 // Pinned timeline: always reachable, never scrolled away.
@@ -77,12 +81,13 @@ struct EditorView: View {
                 .padding(.vertical, theme.s)
                 .background(.bar)
             }
+            .frame(minWidth: 460)
 
             if vm.isListVisible {
                 SectionListPanel(sections: vm.partition.sections,
                                  currentIndex: vm.currentIndex,
                                  onSelect: { vm.goToSection($0) })
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                    .frame(minWidth: 240, idealWidth: 320 * theme.scale, maxWidth: 560)
             }
         }
         .background(.background)
