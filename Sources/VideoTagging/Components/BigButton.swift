@@ -6,6 +6,7 @@ struct BigButton: View {
     let title: String
     var kind: Kind = .neutral
     var systemImage: String? = nil
+    var iconTrailing: Bool = false
     let action: () -> Void
 
     @Environment(\.theme) private var theme
@@ -15,8 +16,9 @@ struct BigButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: theme.s) {
-                if let systemImage { Image(systemName: systemImage) }
+                if let systemImage, !iconTrailing { Image(systemName: systemImage) }
                 Text(title)
+                if let systemImage, iconTrailing { Image(systemName: systemImage) }
             }
             .font(theme.button)
             .padding(.vertical, theme.s + 6)

@@ -45,8 +45,8 @@ struct SectionCardView: View {
                     focused ? onBeginEditing() : onEndEditing()
                 }
 
-            // One row when it fits; wraps to two rows otherwise (Extra Large /
-            // narrow window) so nothing is ever clipped.
+            // One row when it fits; wraps to two otherwise. Cut here is always
+            // centered (overlaid), independent of which side buttons exist.
             ViewThatFits(in: .horizontal) {
                 oneRow
                 twoRows
@@ -60,27 +60,29 @@ struct SectionCardView: View {
     }
 
     private var oneRow: some View {
-        HStack(spacing: theme.s) {
-            if canMergePrevious { mergePreviousButton }
-            if canMoveStart { startNudges }
-            Spacer(minLength: theme.s)
+        ZStack {
             cutButton
-            Spacer(minLength: theme.s)
-            if canMoveEnd { endNudges }
-            if canMergeNext { mergeNextButton }
+            HStack(spacing: theme.l) {
+                if canMergePrevious { mergePreviousButton }
+                if canMoveStart { startNudges }
+                Spacer(minLength: 200 * theme.scale)
+                if canMoveEnd { endNudges }
+                if canMergeNext { mergeNextButton }
+            }
         }
     }
 
     private var twoRows: some View {
         VStack(spacing: theme.s) {
-            HStack(spacing: theme.s) {
-                if canMoveStart { startNudges }
-                Spacer(minLength: theme.s)
+            ZStack {
                 cutButton
-                Spacer(minLength: theme.s)
-                if canMoveEnd { endNudges }
+                HStack(spacing: theme.l) {
+                    if canMoveStart { startNudges }
+                    Spacer(minLength: 180 * theme.scale)
+                    if canMoveEnd { endNudges }
+                }
             }
-            HStack(spacing: theme.s) {
+            HStack(spacing: theme.l) {
                 if canMergePrevious { mergePreviousButton }
                 Spacer(minLength: 0)
                 if canMergeNext { mergeNextButton }
@@ -94,31 +96,36 @@ struct SectionCardView: View {
 
     private var mergePreviousButton: some View {
         BigButton(title: Strings.mergeWithPrevious, kind: .destructive,
-                  systemImage: "arrow.up.to.line.compact", action: onMergePrevious)
+                  systemImage: "arrow.left.to.line", action: onMergePrevious)
     }
 
     private var mergeNextButton: some View {
         BigButton(title: Strings.mergeWithNext, kind: .destructive,
-                  systemImage: "arrow.down.to.line.compact", action: onMergeNext)
+                  systemImage: "arrow.right.to.line", iconTrailing: true, action: onMergeNext)
     }
 
     private var startNudges: some View {
-        HStack(spacing: theme.xs) {
-            Text(Strings.sectionStart)
-                .font(theme.label).textCase(.uppercase).kerning(0.5)
-                .foregroundStyle(theme.textSecondary)
-            BigButton(title: Strings.nudgeEarlier) { onMoveStart(-1000) }
-            BigButton(title: Strings.nudgeLater) { onMoveStart(1000) }
-        }
+        nudgeGroup(label: Strings.sectionStart,
+                   onEarlier: { onMoveStart(-1000) },
+                   onLater: { onMoveStart(1000) })
     }
 
     private var endNudges: some View {
-        HStack(spacing: theme.xs) {
-            BigButton(title: Strings.nudgeEarlier) { onMoveEnd(-1000) }
-            BigButton(title: Strings.nudgeLater) { onMoveEnd(1000) }
-            Text(Strings.sectionEnd)
+        nudgeGroup(label: Strings.sectionEnd,
+                   onEarlier: { onMoveEnd(-1000) },
+                   onLater: { onMoveEnd(1000) })
+    }
+
+    /// `[ − 1 s ]  LABEL  [ + 1 s ]` — the boundary name centered between its
+    /// two nudge buttons, symmetric for both start and end.
+    private func nudgeGroup(label: String, onEarlier: @escaping () -> Void, onLater: @escaping () -> Void) -> some View {
+        HStack(spacing: theme.s) {
+            BigButton(title: Strings.nudgeEarlier, action: onEarlier)
+            Text(label)
                 .font(theme.label).textCase(.uppercase).kerning(0.5)
                 .foregroundStyle(theme.textSecondary)
+                .fixedSize()
+            BigButton(title: Strings.nudgeLater, action: onLater)
         }
     }
 }
