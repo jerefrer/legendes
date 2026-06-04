@@ -15,28 +15,37 @@ struct SectionCardView: View {
     let onBeginEditing: () -> Void
     let onEndEditing: () -> Void
 
+    @Environment(\.theme) private var theme
     @FocusState private var isFocused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text(Strings.sectionHeader(index, SRTTime(milliseconds: section.start).displayString, SRTTime(milliseconds: section.end).displayString))
-                .font(Theme.Fonts.label)
-                .foregroundStyle(Theme.Colors.textSecondary)
+        VStack(alignment: .leading, spacing: theme.m) {
+            Text(Strings.sectionHeader(index,
+                                       SRTTime(milliseconds: section.start).displayString,
+                                       SRTTime(milliseconds: section.end).displayString))
+                .font(theme.label)
+                .textCase(.uppercase)
+                .kerning(0.5)
+                .foregroundStyle(theme.textSecondary)
 
             TextEditor(text: text)
-                .font(Theme.Fonts.body)
-                .frame(minHeight: 80)
-                .padding(8)
-                .background(Theme.Colors.background)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .font(theme.body)
+                .scrollContentBackground(.hidden)
+                .frame(minHeight: 90 * theme.scale)
+                .padding(theme.s)
+                .background(RoundedRectangle(cornerRadius: theme.radiusSmall, style: .continuous)
+                    .fill(.background.opacity(0.5)))
+                .overlay(RoundedRectangle(cornerRadius: theme.radiusSmall, style: .continuous)
+                    .strokeBorder(isFocused ? theme.accent : theme.separator, lineWidth: isFocused ? 2 : 1))
                 .focused($isFocused)
+                .animation(.easeOut(duration: 0.15), value: isFocused)
                 .onChange(of: isFocused) { _, focused in
                     focused ? onBeginEditing() : onEndEditing()
                 }
 
             BigButton(title: Strings.cutHere, prominent: true, systemImage: "scissors", action: onCut)
 
-            HStack(spacing: Theme.Spacing.s) {
+            HStack(spacing: theme.s) {
                 if canMoveStart {
                     BigButton(title: Strings.moveStartBack) { onMoveStart(-1000) }
                     BigButton(title: Strings.moveStartForward) { onMoveStart(1000) }
@@ -50,9 +59,10 @@ struct SectionCardView: View {
                 BigButton(title: Strings.mergeWithPrevious, systemImage: "arrow.triangle.merge", action: onMerge)
             }
         }
-        .padding(Theme.Spacing.m)
-        .background(Theme.Colors.panel)
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.Colors.accent, lineWidth: 2))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(theme.l)
+        .background(RoundedRectangle(cornerRadius: theme.radius, style: .continuous).fill(.regularMaterial))
+        .overlay(RoundedRectangle(cornerRadius: theme.radius, style: .continuous)
+            .strokeBorder(theme.separator, lineWidth: 1))
+        .shadow(color: .black.opacity(0.12), radius: 16, y: 6)
     }
 }
