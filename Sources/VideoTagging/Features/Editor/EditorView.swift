@@ -20,7 +20,7 @@ struct EditorView: View {
                     // Reserve enough room below the video for the transport and
                     // the full card, so growing the video can never cover them.
                     // On a window too short to fit everything the card scrolls.
-                    let reserved = 490 * theme.scale
+                    let reserved = 380 * theme.scale
                     let maxVideo = max(minVideoHeight, geo.size.height - reserved)
                     let videoH = min(max(videoHeight + videoDrag, minVideoHeight), maxVideo)
 
@@ -203,7 +203,7 @@ private struct ResizeHandle: View {
     }
 }
 
-/// Compact save indicator shown in the toolbar, next to the size controls.
+/// Plain save status text in the toolbar (a status, not a button — no chrome).
 private struct SaveStatusBadge: View {
     let status: AutosaveService.Status
     @Environment(\.theme) private var theme
@@ -211,17 +211,11 @@ private struct SaveStatusBadge: View {
     var body: some View {
         switch status {
         case .saved:
-            Label(Strings.saved, systemImage: "checkmark.circle.fill")
-                .labelStyle(.titleAndIcon)
-                .foregroundStyle(theme.textSecondary)
+            Text(Strings.saved).foregroundStyle(theme.textSecondary)
         case .saving:
-            Label(Strings.saving, systemImage: "arrow.triangle.2.circlepath")
-                .labelStyle(.titleAndIcon)
-                .foregroundStyle(theme.textSecondary)
+            Text(Strings.saving).foregroundStyle(theme.textSecondary)
         case .failed:
-            Label(Strings.saveFailed, systemImage: "exclamationmark.triangle.fill")
-                .labelStyle(.titleAndIcon)
-                .foregroundStyle(theme.error)
+            Text(Strings.saveFailed).foregroundStyle(theme.error)
         case .idle:
             EmptyView()
         }

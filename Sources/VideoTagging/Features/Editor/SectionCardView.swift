@@ -45,41 +45,11 @@ struct SectionCardView: View {
                     focused ? onBeginEditing() : onEndEditing()
                 }
 
-            // Primary action — visible but not full width.
-            HStack {
-                Spacer(minLength: 0)
-                BigButton(title: Strings.cutHere, kind: .primary, systemImage: "scissors", action: onCut)
-                    .frame(maxWidth: 440)
-                Spacer(minLength: 0)
-            }
-
-            // Boundary nudges: start on the left, end on the right (spatial mapping).
-            HStack(alignment: .bottom, spacing: theme.l) {
-                if canMoveStart {
-                    boundaryGroup(title: Strings.sectionStart,
-                                  onEarlier: { onMoveStart(-1000) },
-                                  onLater: { onMoveStart(1000) })
-                }
-                Spacer(minLength: 0)
-                if canMoveEnd {
-                    boundaryGroup(title: Strings.sectionEnd,
-                                  onEarlier: { onMoveEnd(-1000) },
-                                  onLater: { onMoveEnd(1000) })
-                }
-            }
-
-            // Removing a cut — explicit about which neighbour it joins.
-            if canMergePrevious || canMergeNext {
-                HStack(spacing: theme.s) {
-                    if canMergePrevious {
-                        BigButton(title: Strings.mergeWithPrevious, kind: .destructive,
-                                  systemImage: "arrow.up.to.line.compact", action: onMergePrevious)
-                    }
-                    if canMergeNext {
-                        BigButton(title: Strings.mergeWithNext, kind: .destructive,
-                                  systemImage: "arrow.down.to.line.compact", action: onMergeNext)
-                    }
-                }
+            // One row when it fits; wraps to two rows otherwise (Extra Large /
+            // narrow window) so nothing is ever clipped.
+            ViewThatFits(in: .horizontal) {
+                oneRow
+                twoRows
             }
         }
         .padding(theme.l)
@@ -89,17 +59,66 @@ struct SectionCardView: View {
         .shadow(color: .black.opacity(0.12), radius: 16, y: 6)
     }
 
-    private func boundaryGroup(title: String, onEarlier: @escaping () -> Void, onLater: @escaping () -> Void) -> some View {
-        VStack(alignment: .leading, spacing: theme.xs) {
-            Text(title)
-                .font(theme.label)
-                .textCase(.uppercase)
-                .kerning(0.5)
-                .foregroundStyle(theme.textSecondary)
-            HStack(spacing: theme.xs) {
-                BigButton(title: Strings.nudgeEarlier, action: onEarlier)
-                BigButton(title: Strings.nudgeLater, action: onLater)
+    private var oneRow: some View {
+        HStack(spacing: theme.s) {
+            if canMergePrevious { mergePreviousButton }
+            if canMoveStart { startNudges }
+            Spacer(minLength: theme.s)
+            cutButton
+            Spacer(minLength: theme.s)
+            if canMoveEnd { endNudges }
+            if canMergeNext { mergeNextButton }
+        }
+    }
+
+    private var twoRows: some View {
+        VStack(spacing: theme.s) {
+            HStack(spacing: theme.s) {
+                if canMoveStart { startNudges }
+                Spacer(minLength: theme.s)
+                cutButton
+                Spacer(minLength: theme.s)
+                if canMoveEnd { endNudges }
             }
+            HStack(spacing: theme.s) {
+                if canMergePrevious { mergePreviousButton }
+                Spacer(minLength: 0)
+                if canMergeNext { mergeNextButton }
+            }
+        }
+    }
+
+    private var cutButton: some View {
+        BigButton(title: Strings.cutHere, kind: .primary, systemImage: "scissors", action: onCut)
+    }
+
+    private var mergePreviousButton: some View {
+        BigButton(title: Strings.mergeWithPrevious, kind: .destructive,
+                  systemImage: "arrow.up.to.line.compact", action: onMergePrevious)
+    }
+
+    private var mergeNextButton: some View {
+        BigButton(title: Strings.mergeWithNext, kind: .destructive,
+                  systemImage: "arrow.down.to.line.compact", action: onMergeNext)
+    }
+
+    private var startNudges: some View {
+        HStack(spacing: theme.xs) {
+            Text(Strings.sectionStart)
+                .font(theme.label).textCase(.uppercase).kerning(0.5)
+                .foregroundStyle(theme.textSecondary)
+            BigButton(title: Strings.nudgeEarlier) { onMoveStart(-1000) }
+            BigButton(title: Strings.nudgeLater) { onMoveStart(1000) }
+        }
+    }
+
+    private var endNudges: some View {
+        HStack(spacing: theme.xs) {
+            BigButton(title: Strings.nudgeEarlier) { onMoveEnd(-1000) }
+            BigButton(title: Strings.nudgeLater) { onMoveEnd(1000) }
+            Text(Strings.sectionEnd)
+                .font(theme.label).textCase(.uppercase).kerning(0.5)
+                .foregroundStyle(theme.textSecondary)
         }
     }
 }

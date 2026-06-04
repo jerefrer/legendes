@@ -1,8 +1,8 @@
 enum Strings {
     static let appName = "Video Section Tagger"
     static let cutHere = "Cut here"
-    static let sectionStart = "Section start"
-    static let sectionEnd = "Section end"
+    static let sectionStart = "Start"
+    static let sectionEnd = "End"
     static let nudgeEarlier = "◀ 1 s"
     static let nudgeLater = "1 s ▶"
     static let mergeWithPrevious = "Merge with previous"
