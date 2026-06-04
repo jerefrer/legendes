@@ -19,6 +19,31 @@ final class EditorViewModel {
     var isPlaying: Bool = false
     var isEditingText: Bool = false
 
+    private var undoStack = UndoStack<EditorSnapshot>()
+    var canUndo: Bool { undoStack.canUndo }
+    var canRedo: Bool { undoStack.canRedo }
+    private var isDraggingBoundary = false
+
+    private var snapshot: EditorSnapshot {
+        EditorSnapshot(sections: partition.sections, currentIndex: currentIndex)
+    }
+
+    /// Record the pre-edit state. Call BEFORE mutating for discrete edits.
+    private func recordUndo() { undoStack.record(snapshot) }
+
+    private func apply(_ snap: EditorSnapshot) {
+        partition.replaceSections(snap.sections)
+        currentIndex = min(max(snap.currentIndex, 0), partition.sections.count - 1)
+        seek(toMs: partition.sections[currentIndex].start)
+    }
+
+    func undo() {
+        if let restored = undoStack.undo(current: snapshot) { apply(restored); save() }
+    }
+    func redo() {
+        if let restored = undoStack.redo(current: snapshot) { apply(restored); save() }
+    }
+
     private let autosave = AutosaveService()
     // @ObservationIgnored + nonisolated(unsafe): deinit is nonisolated in Swift 6;
     // this var is only ever written/read on the main thread.
@@ -91,17 +116,24 @@ final class EditorViewModel {
     func nextSection() { goToSection(currentIndex + 1) }
 
     // MARK: Text editing focus
-    func beginTextEditing() { player.pause(); isEditingText = true }
+    // Text editing: record ONE undo step at focus-in, before any keystroke.
+    func beginTextEditing() {
+        recordUndo()
+        player.pause()
+        isEditingText = true
+    }
     func endTextEditing() { isEditingText = false }
 
     // MARK: Editing (delegates to Core, then saves)
     func cutHere() {
+        recordUndo()
         partition.cut(atMs: currentMs)
         currentIndex = partition.indexContaining(ms: currentMs)
         save()
     }
     func moveStart(byMs delta: Int) {
         guard currentIndex >= 1 else { return }
+        recordUndo()
         partition.moveBoundary(beforeIndex: currentIndex,
                                toMs: partition.sections[currentIndex].start + delta)
         save()
@@ -109,12 +141,14 @@ final class EditorViewModel {
     func moveEnd(byMs delta: Int) {
         let boundary = currentIndex + 1
         guard boundary < partition.sections.count else { return }
+        recordUndo()
         partition.moveBoundary(beforeIndex: boundary,
                                toMs: partition.sections[currentIndex].end + delta)
         save()
     }
     func mergeWithPrevious() {
         guard currentIndex >= 1 else { return }
+        recordUndo()
         partition.merge(boundaryBeforeIndex: currentIndex)
         currentIndex = max(0, currentIndex - 1)
         save()
@@ -124,11 +158,12 @@ final class EditorViewModel {
         save()
     }
 
-    // I2: go through a VM method so the timeline is the single mutation site.
-    func moveBoundaryByDrag(beforeIndex: Int, toMs: Int) {
+    // Boundary drag: record once at the start of the gesture.
+    func beginBoundaryDrag(beforeIndex: Int, toMs: Int) {
+        if !isDraggingBoundary { recordUndo(); isDraggingBoundary = true }
         partition.moveBoundary(beforeIndex: beforeIndex, toMs: toMs)
-        save()
     }
+    func endBoundaryDrag() { isDraggingBoundary = false; save() }
 
     func save() {
         autosave.scheduleSave(sections: partition.sections, to: srtURL) { [weak self] status in

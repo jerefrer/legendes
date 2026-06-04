@@ -85,6 +85,14 @@ public struct SectionPartition: Equatable, Sendable {
         sections[beforeIndex].start = clamped
     }
 
+    /// Replace all sections (used by undo/redo to restore a snapshot).
+    /// Assumes the snapshot was produced by this partition, so it already
+    /// satisfies the contiguity/duration invariant.
+    public mutating func replaceSections(_ newSections: [Section]) {
+        guard !newSections.isEmpty else { return }
+        sections = newSections
+    }
+
     /// Remove the cut before `boundaryBeforeIndex`, merging it with the previous
     /// section. Non-empty text wins; both non-empty are joined with newline.
     public mutating func merge(boundaryBeforeIndex i: Int) {

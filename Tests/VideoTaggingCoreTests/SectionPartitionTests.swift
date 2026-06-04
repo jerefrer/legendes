@@ -90,4 +90,14 @@ import Testing
         let p = SectionPartition(duration: 60_000)
         #expect(p.indexContaining(ms: -1000) == 0)
     }
+
+    @Test func replaceSectionsRestoresState() {
+        var p = SectionPartition(duration: 60_000)
+        p.cut(atMs: 30_000)
+        let snapshot = p.sections
+        p.merge(boundaryBeforeIndex: 1)
+        #expect(p.sections.count == 1)
+        p.replaceSections(snapshot)
+        #expect(p.sections.count == 2)
+    }
 }

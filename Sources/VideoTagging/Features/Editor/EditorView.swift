@@ -9,6 +9,10 @@ struct EditorView: View {
         HStack(spacing: 0) {
             VStack(spacing: Theme.Spacing.m) {
                 HStack {
+                    BigButton(title: Strings.undo, systemImage: "arrow.uturn.backward") { vm.undo() }
+                        .disabled(!vm.canUndo)
+                    BigButton(title: Strings.redo, systemImage: "arrow.uturn.forward") { vm.redo() }
+                        .disabled(!vm.canRedo)
                     Spacer()
                     BigButton(title: vm.isListVisible ? Strings.hideList : Strings.showList,
                               systemImage: "sidebar.right") { vm.isListVisible.toggle() }
@@ -55,7 +59,7 @@ struct EditorView: View {
                         currentIndex: vm.currentIndex,
                         onSelect: { vm.goToSection($0) },
                         onDragBoundary: { beforeIndex, toMs in
-                            vm.moveBoundaryByDrag(beforeIndex: beforeIndex, toMs: toMs)
+                            vm.beginBoundaryDrag(beforeIndex: beforeIndex, toMs: toMs)
                         }
                     )
                     Button { vm.nextSection() } label: { Image(systemName: "chevron.right").font(.system(size: 24)) }
@@ -85,6 +89,11 @@ struct EditorView: View {
             let delta = press.key.character == "," ? -1000 : 1000
             if press.modifiers.contains(.shift) { vm.moveStart(byMs: delta) }
             else { vm.moveEnd(byMs: delta) }
+            return .handled
+        }
+        .onKeyPress(keys: ["z"]) { press in
+            guard press.modifiers.contains(.command) else { return .ignored }
+            if press.modifiers.contains(.shift) { vm.redo() } else { vm.undo() }
             return .handled
         }
         .onAppear { PendingSaveFlusher.flush = { vm.flushSave() } }
