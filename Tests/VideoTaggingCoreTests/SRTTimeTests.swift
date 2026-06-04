@@ -25,4 +25,10 @@ import Testing
         #expect(SRTTime(milliseconds: 747_000).displayString == "12:27")
         #expect(SRTTime(milliseconds: 3_746_333).displayString == "1:02:26")
     }
+
+    @Test func displayWithMillis() {
+        #expect(SRTTime(milliseconds: 54_997).displayStringWithMillis == "0:54.997")
+        #expect(SRTTime(milliseconds: 747_350).displayStringWithMillis == "12:27.350")
+        #expect(SRTTime(milliseconds: 3_746_333).displayStringWithMillis == "1:02:26.333")
+    }
 }

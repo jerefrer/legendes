@@ -8,10 +8,10 @@ struct TimeLabel: View {
 
     var body: some View {
         HStack(spacing: theme.xs) {
-            Text(SRTTime(milliseconds: currentMs).displayString)
+            Text(SRTTime(milliseconds: currentMs).displayStringWithMillis)
                 .foregroundStyle(theme.textPrimary)
             Text("/").foregroundStyle(theme.textSecondary)
-            Text(SRTTime(milliseconds: totalMs).displayString)
+            Text(SRTTime(milliseconds: totalMs).displayStringWithMillis)
                 .foregroundStyle(theme.textSecondary)
         }
         .font(theme.time)

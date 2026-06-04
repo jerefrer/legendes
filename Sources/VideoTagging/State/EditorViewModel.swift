@@ -23,6 +23,11 @@ final class EditorViewModel {
     var canUndo: Bool { undoStack.canUndo }
     var canRedo: Bool { undoStack.canRedo }
     private var isDraggingBoundary = false
+    // While a seek is in flight the periodic observer reports stale times; ignore
+    // them so the slider doesn't jump back-and-forth. Token guards out-of-order
+    // completions from rapid successive seeks.
+    @ObservationIgnored private var isSeeking = false
+    @ObservationIgnored private var seekToken = 0
 
     private var snapshot: EditorSnapshot {
         EditorSnapshot(sections: partition.sections, currentIndex: currentIndex)
@@ -76,6 +81,8 @@ final class EditorViewModel {
             // The callback runs on .main; hop to MainActor to satisfy Swift 6 isolation.
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                // Ignore stale ticks while a seek is settling.
+                guard !self.isSeeking else { return }
                 self.currentMs = Int(time.seconds * 1000)
                 // Only track section index when the user is not editing text,
                 // so keystrokes always target the section they started editing.
@@ -98,11 +105,20 @@ final class EditorViewModel {
     }
     func seek(toMs ms: Int) {
         let clamped = min(max(ms, 0), totalMs)
-        player.seek(to: CMTime(value: CMTimeValue(clamped), timescale: 1000),
-                    toleranceBefore: .zero, toleranceAfter: .zero)
+        // Update UI optimistically and freeze observer updates until the seek
+        // completes, so the slider goes straight to the target without flicker.
         currentMs = clamped
-        // M2: keep currentIndex coherent immediately after a seek.
         currentIndex = partition.indexContaining(ms: clamped)
+        isSeeking = true
+        seekToken += 1
+        let token = seekToken
+        player.seek(to: CMTime(value: CMTimeValue(clamped), timescale: 1000),
+                    toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.seekToken == token else { return }
+                self.isSeeking = false
+            }
+        }
     }
     func jog(byMs delta: Int) { seek(toMs: currentMs + delta) }
 
@@ -134,17 +150,24 @@ final class EditorViewModel {
     }
     func moveStart(byMs delta: Int) {
         guard currentIndex >= 1 else { return }
+        let stay = currentIndex
         recordUndo()
-        partition.moveBoundary(beforeIndex: currentIndex,
-                               toMs: partition.sections[currentIndex].start + delta)
+        partition.moveBoundary(beforeIndex: stay,
+                               toMs: partition.sections[stay].start + delta)
+        // Follow the moved boundary so the slider shows where it landed.
+        seek(toMs: partition.sections[stay].start)
         save()
     }
     func moveEnd(byMs delta: Int) {
         let boundary = currentIndex + 1
         guard boundary < partition.sections.count else { return }
+        let stay = currentIndex
         recordUndo()
         partition.moveBoundary(beforeIndex: boundary,
-                               toMs: partition.sections[currentIndex].end + delta)
+                               toMs: partition.sections[stay].end + delta)
+        // Seek just inside the section's end so the slider follows without
+        // jumping the selection to the next section.
+        seek(toMs: max(partition.sections[stay].start, partition.sections[stay].end - 1))
         save()
     }
     func mergeWithPrevious() {

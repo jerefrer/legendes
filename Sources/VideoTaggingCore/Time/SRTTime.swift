@@ -44,4 +44,9 @@ public struct SRTTime: Equatable, Comparable, Sendable {
             ? String(format: "%d:%02d:%02d", h, m, s)
             : String(format: "%d:%02d", m, s)
     }
+
+    /// Like `displayString` but with milliseconds: "m:ss.mmm" / "h:mm:ss.mmm".
+    public var displayStringWithMillis: String {
+        String(format: "%@.%03d", displayString, milliseconds % 1000)
+    }
 }
