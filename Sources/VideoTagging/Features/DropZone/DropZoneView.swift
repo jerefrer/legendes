@@ -1,13 +1,42 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import VideoTaggingCore
 
 struct DropZoneView: View {
     let onOpen: ([URL]) -> Void
     let errorMessage: String?
     @State private var isTargeted = false
     @Environment(\.theme) private var theme
+    @Environment(AppSettings.self) private var settings
 
     var body: some View {
+        @Bindable var settings = settings
+        return content
+            // Same toolbar (display settings) as the editor so the window's
+            // title bar has the same height — the traffic lights don't shift
+            // when a video is opened.
+            .toolbar {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Picker("Interface size", selection: $settings.interfaceSize) {
+                        Text("A").font(.system(size: 11)).tag(InterfaceSize.comfortable)
+                        Text("A").font(.system(size: 14)).tag(InterfaceSize.large)
+                        Text("A").font(.system(size: 17)).tag(InterfaceSize.extraLarge)
+                    }
+                    .pickerStyle(.segmented)
+                    .help("Interface size")
+
+                    Picker("Appearance", selection: $settings.appearance) {
+                        Image(systemName: "circle.lefthalf.filled").tag(AppearanceMode.system)
+                        Image(systemName: "sun.max").tag(AppearanceMode.light)
+                        Image(systemName: "moon").tag(AppearanceMode.dark)
+                    }
+                    .pickerStyle(.segmented)
+                    .help("Appearance")
+                }
+            }
+    }
+
+    private var content: some View {
         VStack(spacing: theme.l) {
             Image(systemName: "film.stack")
                 .font(.system(size: 64 * theme.scale))

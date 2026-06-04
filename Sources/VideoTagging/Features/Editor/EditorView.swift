@@ -18,11 +18,6 @@ struct EditorView: View {
         @Bindable var settings = settings
         HSplitView {
             VStack(spacing: 0) {
-                // Centered save status as plain content text (no toolbar capsule).
-                SaveStatusBadge(status: vm.saveStatus)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, theme.s)
-
                 GeometryReader { geo in
                     // Reserve enough room below the video for the transport and
                     // the full card, so growing the video can never cover them.
@@ -186,6 +181,11 @@ struct EditorView: View {
                 }
                 .disabled(!vm.canRedo)
             }
+            // Centered status. macOS 26 wraps toolbar items in a glass capsule
+            // (not removable via the API), so keep it tidy with inner padding.
+            ToolbarItem(placement: .status) {
+                SaveStatusBadge(status: vm.saveStatus)
+            }
             ToolbarItemGroup(placement: .primaryAction) {
                 Picker("Interface size", selection: $settings.interfaceSize) {
                     Text("A").font(.system(size: 11)).tag(InterfaceSize.comfortable)
@@ -261,6 +261,7 @@ private struct SaveStatusBadge: View {
                 EmptyView()
             }
         }
+        .padding(.horizontal, theme.s)
         .allowsHitTesting(false)
     }
 }

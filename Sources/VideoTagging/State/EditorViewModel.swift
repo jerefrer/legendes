@@ -15,7 +15,8 @@ final class EditorViewModel {
     var currentMs: Int = 0
     var totalMs: Int = 0
     var isListVisible: Bool = false
-    var saveStatus: AutosaveService.Status = .saved
+    // Idle until the first edit, so no status shows on a freshly opened file.
+    var saveStatus: AutosaveService.Status = .idle
     var isPlaying: Bool = false
     var isEditingText: Bool = false
 
