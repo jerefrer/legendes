@@ -2,6 +2,8 @@ import SwiftUI
 
 struct ShortcutsHelp: View {
     let onClose: () -> Void
+    @Environment(\.theme) private var theme
+
     private let rows: [(String, String)] = [
         ("Space", "Play / Pause"),
         ("← / →", "Jog 5 seconds"),
@@ -10,20 +12,26 @@ struct ShortcutsHelp: View {
         ("↑ / ↓", "Previous / Next section"),
         (", / .", "Move end 1s back / forward"),
         ("Shift , / .", "Move start 1s back / forward"),
+        ("⌘Z / ⇧⌘Z", "Undo / Redo"),
         ("Esc", "Leave the text field"),
     ]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: Theme.Spacing.m) {
-            Text(Strings.keyboardShortcutsTitle).font(.system(size: 26, weight: .semibold))
-            ForEach(rows, id: \.0) { key, desc in
-                HStack {
-                    Text(key).font(Theme.Fonts.time).frame(width: 160, alignment: .leading)
-                    Text(desc).font(Theme.Fonts.body)
+        VStack(alignment: .leading, spacing: theme.m) {
+            Text(Strings.keyboardShortcutsTitle).font(theme.title)
+            VStack(alignment: .leading, spacing: theme.s) {
+                ForEach(rows, id: \.0) { key, desc in
+                    HStack(spacing: theme.m) {
+                        Text(key).font(theme.time).frame(width: 170 * theme.scale, alignment: .leading)
+                            .foregroundStyle(theme.textSecondary)
+                        Text(desc).font(theme.body)
+                    }
                 }
             }
             BigButton(title: Strings.close, action: onClose)
         }
-        .padding(Theme.Spacing.l)
-        .frame(minWidth: 480)
+        .padding(theme.xl)
+        .frame(minWidth: 520 * theme.scale)
+        .background(.regularMaterial)
     }
 }

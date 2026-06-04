@@ -5,39 +5,41 @@ struct DropZoneView: View {
     let onOpen: ([URL]) -> Void
     let errorMessage: String?
     @State private var isTargeted = false
+    @Environment(\.theme) private var theme
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.l) {
+        VStack(spacing: theme.l) {
             Image(systemName: "film.stack")
-                .font(.system(size: 64))
-                .foregroundStyle(Theme.Colors.textSecondary)
-            Text(Strings.DropZone.title).font(.system(size: 30, weight: .semibold))
+                .font(.system(size: 64 * theme.scale))
+                .foregroundStyle(theme.accent.gradient)
+            Text(Strings.DropZone.title).font(theme.font(30, .semibold))
             Text(Strings.DropZone.subtitle)
-                .font(Theme.Fonts.body)
-                .foregroundStyle(Theme.Colors.textSecondary)
+                .font(theme.body)
+                .foregroundStyle(theme.textSecondary)
                 .multilineTextAlignment(.center)
             if let errorMessage {
                 Text(errorMessage)
-                    .font(Theme.Fonts.body)
-                    .foregroundStyle(.orange)
+                    .font(theme.body)
+                    .foregroundStyle(theme.error)
                     .multilineTextAlignment(.center)
-                    .padding(.top, Theme.Spacing.s)
+                    .padding(.top, theme.s)
             }
         }
-        .padding(60)
+        .padding(theme.xl + theme.l)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(isTargeted ? Theme.Colors.accent.opacity(0.15) : Color(white: 0.12))
+        .background(isTargeted ? AnyShapeStyle(theme.accent.opacity(0.12)) : AnyShapeStyle(.regularMaterial))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(style: StrokeStyle(lineWidth: 3, dash: [10]))
-                .foregroundStyle(Theme.Colors.panelBorder)
+            RoundedRectangle(cornerRadius: theme.radius, style: .continuous)
+                .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [10]))
+                .foregroundStyle(isTargeted ? theme.accent : theme.separator)
         )
         .contentShape(Rectangle())
         .onTapGesture { pickFiles() }
         .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
             collectURLs(from: providers); return true
         }
-        .padding(Theme.Spacing.l)
+        .padding(theme.l)
+        .animation(.easeOut(duration: 0.15), value: isTargeted)
     }
 
     private func collectURLs(from providers: [NSItemProvider]) {

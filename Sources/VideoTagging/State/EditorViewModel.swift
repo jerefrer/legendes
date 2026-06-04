@@ -154,6 +154,7 @@ final class EditorViewModel {
         save()
     }
     func updateCurrentText(_ text: String) {
+        guard partition.sections.indices.contains(currentIndex) else { return }
         partition.sections[currentIndex].text = text
         save()
     }
