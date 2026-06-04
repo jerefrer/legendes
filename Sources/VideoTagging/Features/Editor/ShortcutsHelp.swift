@@ -13,6 +13,7 @@ struct ShortcutsHelp: View {
         (", / .", "Move end 1s back / forward"),
         ("Shift , / .", "Move start 1s back / forward"),
         ("⌘Z / ⇧⌘Z", "Undo / Redo"),
+        ("Hold ⌥ Option", "Nudge by 0.1 s instead of 1 s"),
         ("Esc", "Leave the text field"),
     ]
 

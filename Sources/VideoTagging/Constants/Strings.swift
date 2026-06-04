@@ -5,6 +5,8 @@ enum Strings {
     static let sectionEnd = "End"
     static let nudgeEarlier = "− 1 s"
     static let nudgeLater = "+ 1 s"
+    static let nudgeEarlierFine = "− 0.1 s"
+    static let nudgeLaterFine = "+ 0.1 s"
     static let mergeWithPrevious = "Merge with previous"
     static let mergeWithNext = "Merge with next"
     static let descriptionPlaceholder = "Describe what is shown here…"

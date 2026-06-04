@@ -7,6 +7,8 @@ struct EditorView: View {
     @State private var showHelp = false
     @State private var videoHeight: CGFloat = 300
     @GestureState private var videoDrag: CGFloat = 0
+    @State private var optionDown = false
+    @State private var flagsMonitor: Any?
     @Environment(\.theme) private var theme
     @Environment(AppSettings.self) private var settings
 
@@ -66,6 +68,7 @@ struct EditorView: View {
                                     canMoveEnd: vm.currentIndex + 1 < vm.partition.sections.count,
                                     canMergePrevious: vm.currentIndex >= 1,
                                     canMergeNext: vm.currentIndex + 1 < vm.partition.sections.count,
+                                    optionDown: optionDown,
                                     text: Binding(
                                         get: { vm.currentSection.text },
                                         set: { vm.updateCurrentText($0) }
@@ -124,25 +127,48 @@ struct EditorView: View {
         .background(.background)
         .focusable()
         .focusEffectDisabled()
-        .onKeyPress(.space) { vm.togglePlay(); return .handled }
-        .onKeyPress(keys: [.leftArrow]) { p in vm.jog(byMs: p.modifiers.contains(.shift) ? -1000 : -5000); return .handled }
-        .onKeyPress(keys: [.rightArrow]) { p in vm.jog(byMs: p.modifiers.contains(.shift) ? 1000 : 5000); return .handled }
-        .onKeyPress(keys: ["c", "\r"]) { _ in vm.cutHere(); return .handled }
-        .onKeyPress(.upArrow) { vm.previousSection(); return .handled }
-        .onKeyPress(.downArrow) { vm.nextSection(); return .handled }
+        // While editing the description, let every key reach the text field
+        // (Space must type a space, arrows move the caret, etc.).
+        .onKeyPress(.space) { vm.isEditingText ? .ignored : { vm.togglePlay(); return .handled }() }
+        .onKeyPress(keys: [.leftArrow]) { p in
+            guard !vm.isEditingText else { return .ignored }
+            vm.jog(byMs: p.modifiers.contains(.shift) ? -1000 : -5000); return .handled
+        }
+        .onKeyPress(keys: [.rightArrow]) { p in
+            guard !vm.isEditingText else { return .ignored }
+            vm.jog(byMs: p.modifiers.contains(.shift) ? 1000 : 5000); return .handled
+        }
+        .onKeyPress(keys: ["c", "\r"]) { _ in
+            guard !vm.isEditingText else { return .ignored }
+            vm.cutHere(); return .handled
+        }
+        .onKeyPress(.upArrow) { vm.isEditingText ? .ignored : { vm.previousSection(); return .handled }() }
+        .onKeyPress(.downArrow) { vm.isEditingText ? .ignored : { vm.nextSection(); return .handled }() }
         .onKeyPress(keys: [",", "."]) { press in
+            guard !vm.isEditingText else { return .ignored }
             let delta = press.key.character == "," ? -1000 : 1000
             if press.modifiers.contains(.shift) { vm.moveStart(byMs: delta) }
             else { vm.moveEnd(byMs: delta) }
             return .handled
         }
         .onKeyPress(keys: ["z"]) { press in
-            guard press.modifiers.contains(.command) else { return .ignored }
+            // Let the text field's native undo work while editing.
+            guard !vm.isEditingText, press.modifiers.contains(.command) else { return .ignored }
             if press.modifiers.contains(.shift) { vm.redo() } else { vm.undo() }
             return .handled
         }
-        .onAppear { PendingSaveFlusher.flush = { vm.flushSave() } }
-        .onDisappear { vm.flushSave(); PendingSaveFlusher.flush = {} }
+        .onAppear {
+            PendingSaveFlusher.flush = { vm.flushSave() }
+            flagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { event in
+                optionDown = event.modifierFlags.contains(.option)
+                return event
+            }
+        }
+        .onDisappear {
+            vm.flushSave(); PendingSaveFlusher.flush = {}
+            if let flagsMonitor { NSEvent.removeMonitor(flagsMonitor) }
+            flagsMonitor = nil
+        }
         .toolbar {
             ToolbarItemGroup(placement: .navigation) {
                 Button(action: { vm.undo() }) {
@@ -203,21 +229,34 @@ private struct ResizeHandle: View {
     }
 }
 
-/// Plain save status text in the toolbar (a status, not a button — no chrome).
+/// Save status shown in the toolbar. Non-interactive (`allowsHitTesting(false)`)
+/// so macOS doesn't draw a button-like hover/focus background around it.
 private struct SaveStatusBadge: View {
     let status: AutosaveService.Status
     @Environment(\.theme) private var theme
 
     var body: some View {
-        switch status {
-        case .saved:
-            Text(Strings.saved).foregroundStyle(theme.textSecondary)
-        case .saving:
-            Text(Strings.saving).foregroundStyle(theme.textSecondary)
-        case .failed:
-            Text(Strings.saveFailed).foregroundStyle(theme.error)
-        case .idle:
-            EmptyView()
+        Group {
+            switch status {
+            case .saved:
+                HStack(spacing: theme.xs) {
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                    Text(Strings.saved).foregroundStyle(theme.textSecondary)
+                }
+            case .saving:
+                HStack(spacing: theme.xs) {
+                    Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(theme.textSecondary)
+                    Text(Strings.saving).foregroundStyle(theme.textSecondary)
+                }
+            case .failed:
+                HStack(spacing: theme.xs) {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(theme.error)
+                    Text(Strings.saveFailed).foregroundStyle(theme.error)
+                }
+            case .idle:
+                EmptyView()
+            }
         }
+        .allowsHitTesting(false)
     }
 }

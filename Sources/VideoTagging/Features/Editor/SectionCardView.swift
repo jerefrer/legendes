@@ -8,6 +8,7 @@ struct SectionCardView: View {
     let canMoveEnd: Bool
     let canMergePrevious: Bool
     let canMergeNext: Bool
+    let optionDown: Bool
     let text: Binding<String>
     let onCut: () -> Void
     let onMoveStart: (Int) -> Void
@@ -105,27 +106,31 @@ struct SectionCardView: View {
     }
 
     private var startNudges: some View {
-        nudgeGroup(label: Strings.sectionStart,
-                   onEarlier: { onMoveStart(-1000) },
-                   onLater: { onMoveStart(1000) })
+        nudgeGroup(label: Strings.sectionStart, onMove: onMoveStart)
     }
 
     private var endNudges: some View {
-        nudgeGroup(label: Strings.sectionEnd,
-                   onEarlier: { onMoveEnd(-1000) },
-                   onLater: { onMoveEnd(1000) })
+        nudgeGroup(label: Strings.sectionEnd, onMove: onMoveEnd)
     }
 
+    // Hold Option for 0.1 s steps instead of 1 s.
+    private var step: Int { optionDown ? 100 : 1000 }
+    private var earlierLabel: String { optionDown ? Strings.nudgeEarlierFine : Strings.nudgeEarlier }
+    private var laterLabel: String { optionDown ? Strings.nudgeLaterFine : Strings.nudgeLater }
+
     /// `[ − 1 s ]  LABEL  [ + 1 s ]` — the boundary name centered between its
-    /// two nudge buttons, symmetric for both start and end.
-    private func nudgeGroup(label: String, onEarlier: @escaping () -> Void, onLater: @escaping () -> Void) -> some View {
+    /// two nudge buttons, symmetric for both start and end. Fixed button width
+    /// so the label doesn't reflow when it grows to "− 0.1 s".
+    private func nudgeGroup(label: String, onMove: @escaping (Int) -> Void) -> some View {
         HStack(spacing: theme.s) {
-            BigButton(title: Strings.nudgeEarlier, action: onEarlier)
+            BigButton(title: earlierLabel, tint: theme.accent, emphasized: optionDown) { onMove(-step) }
+                .frame(width: 92 * theme.scale)
             Text(label)
                 .font(theme.label).textCase(.uppercase).kerning(0.5)
                 .foregroundStyle(theme.textSecondary)
                 .fixedSize()
-            BigButton(title: Strings.nudgeLater, action: onLater)
+            BigButton(title: laterLabel, tint: theme.accent, emphasized: optionDown) { onMove(step) }
+                .frame(width: 92 * theme.scale)
         }
     }
 }

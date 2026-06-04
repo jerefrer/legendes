@@ -7,6 +7,10 @@ struct BigButton: View {
     var kind: Kind = .neutral
     var systemImage: String? = nil
     var iconTrailing: Bool = false
+    /// When set (with `.neutral`), the button uses a coloured tint instead of
+    /// the plain material — `emphasized` deepens it (e.g. while a modifier is held).
+    var tint: Color? = nil
+    var emphasized: Bool = false
     let action: () -> Void
 
     @Environment(\.theme) private var theme
@@ -41,29 +45,32 @@ struct BigButton: View {
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.12), value: hovering)
+        .animation(.easeOut(duration: 0.12), value: emphasized)
     }
 
     private var foreground: Color {
         switch kind {
         case .primary: theme.textOnAccent
-        case .neutral: theme.textPrimary
         case .destructive: theme.error
+        case .neutral: tint ?? theme.textPrimary
         }
     }
 
     private var fill: AnyShapeStyle {
         switch kind {
         case .primary: AnyShapeStyle(theme.accent)
-        case .neutral: AnyShapeStyle(.regularMaterial)
         case .destructive: AnyShapeStyle(theme.error.opacity(0.12))
+        case .neutral:
+            if let tint { AnyShapeStyle(tint.opacity(emphasized ? 0.30 : 0.16)) }
+            else { AnyShapeStyle(.regularMaterial) }
         }
     }
 
     private var border: Color {
         switch kind {
         case .primary: .clear
-        case .neutral: theme.separator
         case .destructive: theme.error.opacity(0.4)
+        case .neutral: tint.map { $0.opacity(emphasized ? 0.7 : 0.4) } ?? theme.separator
         }
     }
 }
