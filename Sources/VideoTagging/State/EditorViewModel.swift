@@ -99,6 +99,14 @@ final class EditorViewModel {
         return partition.sections[i]
     }
 
+    /// A cut is only possible strictly inside a section (mirrors `cut(atMs:)`'s
+    /// guard). At/near an existing boundary there's already a cut, so disable it.
+    var canCut: Bool {
+        let s = partition.sections[partition.indexContaining(ms: currentMs)]
+        return currentMs > s.start + SectionPartition.minSectionMs
+            && currentMs < s.end - SectionPartition.minSectionMs
+    }
+
     // MARK: Playback
     func togglePlay() {
         player.timeControlStatus == .playing ? player.pause() : player.play()

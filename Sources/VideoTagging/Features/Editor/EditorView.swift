@@ -68,6 +68,7 @@ struct EditorView: View {
                                     canMoveEnd: vm.currentIndex + 1 < vm.partition.sections.count,
                                     canMergePrevious: vm.currentIndex >= 1,
                                     canMergeNext: vm.currentIndex + 1 < vm.partition.sections.count,
+                                    canCut: vm.canCut,
                                     optionDown: optionDown,
                                     text: Binding(
                                         get: { vm.currentSection.text },

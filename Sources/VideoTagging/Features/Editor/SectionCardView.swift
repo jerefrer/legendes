@@ -8,6 +8,7 @@ struct SectionCardView: View {
     let canMoveEnd: Bool
     let canMergePrevious: Bool
     let canMergeNext: Bool
+    let canCut: Bool
     let optionDown: Bool
     let text: Binding<String>
     let onCut: () -> Void
@@ -93,6 +94,7 @@ struct SectionCardView: View {
 
     private var cutButton: some View {
         BigButton(title: Strings.cutHere, kind: .primary, systemImage: "scissors", action: onCut)
+            .disabled(!canCut)
     }
 
     private var mergePreviousButton: some View {
