@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img src="site/screenshot.svg" width="820" alt="Légendes app preview">
+  <img src="site/screenshot.png" width="820" alt="Légendes app preview">
 </p>
 
 ## What it is
