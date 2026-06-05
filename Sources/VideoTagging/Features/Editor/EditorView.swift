@@ -113,8 +113,9 @@ struct EditorView: View {
                     .foregroundStyle(theme.textSecondary)
                 }
                 .padding(.horizontal, theme.l)
-                .padding(.vertical, theme.s)
-                .background(.bar)
+                .padding(.top, theme.m)
+                // Same breathing room below the timeline as above the video.
+                .padding(.bottom, theme.l)
             }
             .frame(minWidth: 460)
 
