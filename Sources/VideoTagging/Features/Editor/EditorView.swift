@@ -9,7 +9,7 @@ struct EditorView: View {
     @GestureState private var videoDrag: CGFloat = 0
     @State private var optionDown = false
     @State private var flagsMonitor: Any?
-    @State private var actionsHeight: CGFloat = 60   // measured; bigger when the buttons wrap
+    @State private var cardMinHeight: CGFloat = 240   // measured min height of the section card
     @Environment(\.theme) private var theme
     @Environment(AppSettings.self) private var settings
 
@@ -20,12 +20,12 @@ struct EditorView: View {
         HSplitView {
             VStack(spacing: 0) {
                 GeometryReader { geo in
-                    // Cap the video so the transport + the full card (description
-                    // at its minimum + the action buttons) always fit below it —
-                    // the buttons never scroll away; only the description scrolls,
-                    // internally. `actionsHeight` is measured because the buttons
-                    // wrap to two rows on narrower widths.
-                    let reserved = actionsHeight + 264 * theme.scale
+                    // Cap the video so the transport + the full card always fit
+                    // below it — buttons never slide under the timeline; only the
+                    // description scrolls (internally). cardMinHeight is measured;
+                    // the constant covers the video's top padding + handle +
+                    // transport + the card's outer top padding.
+                    let reserved = cardMinHeight + 140 * theme.scale
                     let maxVideo = max(minVideoHeight, geo.size.height - reserved)
                     let videoH = min(max(videoHeight + videoDrag, minVideoHeight), maxVideo)
 
@@ -126,7 +126,7 @@ struct EditorView: View {
             }
         }
         .background(.background)
-        .onPreferenceChange(ActionsHeightKey.self) { actionsHeight = $0 }
+        .onPreferenceChange(CardMinHeightKey.self) { cardMinHeight = $0 }
         .focusable()
         .focusEffectDisabled()
         // While editing the description, let every key reach the text field

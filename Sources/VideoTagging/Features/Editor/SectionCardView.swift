@@ -1,9 +1,10 @@
 import SwiftUI
 import VideoTaggingCore
 
-/// Reports the measured height of the action-buttons row (it wraps to two rows
-/// on narrow widths) so the editor can reserve exactly enough space below the video.
-struct ActionsHeightKey: PreferenceKey {
+/// Reports the card's minimum height (description at its min + the action
+/// buttons, which wrap to two rows on narrow widths) so the editor can cap the
+/// video and never let the card slide under the timeline.
+struct CardMinHeightKey: PreferenceKey {
     static var defaultValue: CGFloat { 0 }
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
@@ -62,15 +63,32 @@ struct SectionCardView: View {
                 oneRow
                 twoRows
             }
-            .background(GeometryReader { p in
-                Color.clear.preference(key: ActionsHeightKey.self, value: p.size.height)
-            })
         }
         .padding(theme.l)
         .background(RoundedRectangle(cornerRadius: theme.radius, style: .continuous).fill(.regularMaterial))
         .overlay(RoundedRectangle(cornerRadius: theme.radius, style: .continuous)
             .strokeBorder(theme.separator, lineWidth: 1))
         .shadow(color: .black.opacity(0.12), radius: 16, y: 6)
+        .background(cardMinProbe)
+    }
+
+    /// Hidden, same-width replica with the description at its minimum height,
+    /// measured to report the card's true minimum (incl. button wrapping).
+    private var cardMinProbe: some View {
+        VStack(alignment: .leading, spacing: theme.m) {
+            Text(Strings.sectionHeader(index,
+                                       SRTTime(milliseconds: section.start).displayString,
+                                       SRTTime(milliseconds: section.end).displayString))
+                .font(theme.label).textCase(.uppercase).kerning(0.5)
+            Color.clear.frame(height: 80 * theme.scale + 2 * theme.s)   // TextEditor min + its padding
+            ViewThatFits(in: .horizontal) { oneRow; twoRows }
+        }
+        .padding(theme.l)
+        .fixedSize(horizontal: false, vertical: true)
+        .hidden()
+        .background(GeometryReader { p in
+            Color.clear.preference(key: CardMinHeightKey.self, value: p.size.height)
+        })
     }
 
     private var oneRow: some View {
