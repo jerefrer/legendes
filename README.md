@@ -5,11 +5,11 @@
 <h1 align="center">Légendes</h1>
 
 <p align="center">
-  Tag your videos by section — play, cut, describe, and it saves to subtitles automatically.
+  Describe your videos, section by section. Without the complicated software.
 </p>
 
 <p align="center">
-  <a href="https://github.com/jerefrer/legendes/releases/latest"><b>↓ Download for macOS</b></a>
+  <a href="https://github.com/jerefrer/legendes/releases/latest/download/Legendes.dmg"><b>↓ Download for macOS</b></a>
   &nbsp;·&nbsp;
   <a href="https://jerefrer.github.io/legendes/">Website</a>
 </p>
@@ -62,5 +62,10 @@ Pushing a version tag builds and publishes a downloadable app:
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
-A macOS GitHub Actions runner compiles the app, zips `Légendes.app`, and attaches
-it to a GitHub Release (see [`.github/workflows/release.yml`](.github/workflows/release.yml)).
+A macOS GitHub Actions runner compiles the app, packages `Légendes.app` into a
+`.dmg`, and attaches it to a GitHub Release (see
+[`.github/workflows/release.yml`](.github/workflows/release.yml)).
+
+---
+
+<p align="center">By <a href="https://frerejeremy.me">Jérémy Frère</a></p>

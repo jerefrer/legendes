@@ -32,8 +32,9 @@ jobs:
           set -e
           APP="Légendes.app"
           VOL="Légendes"
-          TAG="${GITHUB_REF_NAME:-dev}"
-          DMG="Legendes-${TAG}.dmg"
+          # Stable filename (no version) so the website can link directly to
+          # /releases/latest/download/Legendes.dmg without going via the page.
+          DMG="Legendes.dmg"
           STAGE="$(mktemp -d)"
           cp -R "$APP" "$STAGE/"
           ln -s /Applications "$STAGE/Applications"
