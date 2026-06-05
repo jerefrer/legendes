@@ -66,6 +66,24 @@ A macOS GitHub Actions runner compiles the app, packages `Légendes.app` into a
 `.dmg`, and attaches it to a GitHub Release (see
 [`.github/workflows/release.yml`](.github/workflows/release.yml)).
 
+## Signing & notarization (maintainer)
+
+If these repository secrets are set, the release workflow signs the app with a
+Developer ID, notarizes the `.dmg` with Apple, and staples the ticket — so it
+opens with no Gatekeeper warning. Without them, the app is ad-hoc signed
+(right‑click → Open on first launch). Add them under **Settings → Secrets and
+variables → Actions**:
+
+| Secret | What |
+|---|---|
+| `MACOS_CERT_P12_BASE64` | Your **Developer ID Application** certificate exported as `.p12`, base64‑encoded (`base64 -i cert.p12 \| pbcopy`). |
+| `MACOS_CERT_PASSWORD` | The password you set when exporting the `.p12`. |
+| `AC_API_KEY_ID` | App Store Connect **API key ID**. |
+| `AC_API_ISSUER_ID` | App Store Connect **Issuer ID**. |
+| `AC_API_KEY_P8_BASE64` | The API key `.p8` file, base64‑encoded (`base64 -i AuthKey_XXXX.p8 \| pbcopy`). |
+
+The signing identity is auto‑detected from the imported certificate.
+
 ---
 
 <p align="center">By <a href="https://frerejeremy.me">Jérémy Frère</a></p>

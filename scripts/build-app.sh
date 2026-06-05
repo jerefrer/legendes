@@ -59,8 +59,14 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-# Ad-hoc code signature so macOS treats it as a stable app identity locally.
-codesign --force --sign - "$APP" >/dev/null 2>&1 || true
+# Sign: with a Developer ID (hardened runtime + secure timestamp) when SIGN_IDENTITY
+# is provided (CI notarization path); otherwise ad-hoc for local builds.
+if [ -n "${SIGN_IDENTITY:-}" ]; then
+  codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP"
+  codesign --verify --strict --verbose=2 "$APP"
+else
+  codesign --force --sign - "$APP" >/dev/null 2>&1 || true
+fi
 
 echo "Done: $APP"
 echo "Open it with:  open \"$APP\"    (or double-click it in Finder)"
