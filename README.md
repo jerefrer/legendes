@@ -1,40 +1,66 @@
-# Légendes
+<p align="center">
+  <img src="site/icon.svg" width="112" height="112" alt="Légendes">
+</p>
 
-A native macOS app for tagging a video by section: dividing the timeline into
-contiguous, described segments stored as a SubRip (`.srt`) subtitle file. Built
-for a simple, large, forgiving interface — open a video (and optionally its
-`.srt`), play, cut sections, describe them, adjust boundaries; everything
-auto-saves.
+<h1 align="center">Légendes</h1>
 
-## Requirements
+<p align="center">
+  Tag your videos by section — play, cut, describe, and it saves to subtitles automatically.
+</p>
 
-- macOS 14 or later
-- Xcode 16+ / Swift 6 toolchain (to build)
+<p align="center">
+  <a href="https://github.com/jerefrer/legendes/releases/latest"><b>↓ Download for macOS</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://jerefrer.github.io/legendes/">Website</a>
+</p>
 
-## Run during development
+<p align="center">
+  <img src="site/screenshot.svg" width="820" alt="Légendes app preview">
+</p>
+
+## What it is
+
+**Légendes** is a small, native macOS app for describing what happens in a video,
+section by section. You open a video, split it into segments at each scene change,
+and write a short description for each one. Everything is saved as a standard
+`.srt` subtitle file — so the result works anywhere.
+
+It's built to be **simple and forgiving**: large controls, an adjustable interface
+size, light/dark themes, undo/redo, and automatic saving.
+
+## Install
+
+1. Download the latest **Légendes.app** from the [releases page](https://github.com/jerefrer/legendes/releases/latest).
+2. Move it to your Applications folder and open it.
+   (On first launch, right‑click the app → **Open** to bypass Gatekeeper, since the app isn't notarized yet.)
+
+Requires macOS 14 or later.
+
+## How to use
+
+1. **Open a video** — drop it on the window (with its `.srt` if you have one), or click to pick files.
+2. **Cut & describe** — play the video; press **Cut here** at each scene change and type what you see. Nudge a boundary by ±1 s (hold ⌥ for ±0.1 s).
+3. **Done** — your sections are saved to a `.srt` next to the video, automatically.
+
+## Build from source
 
 ```bash
-swift run VideoTagging
-```
-
-Then drop a video (and optionally its `.srt`) onto the window, or click to pick
-files.
-
-## Build the double-clickable app
-
-```bash
-./scripts/build-app.sh
-open "Légendes.app"
-```
-
-This produces `Légendes.app` (shown as "Légendes" in the Dock and menu bar).
-
-## Tests
-
-```bash
-swift test
+swift run VideoTagging      # run during development
+swift test                  # run the tests
+./scripts/build-app.sh      # build a double-clickable Légendes.app
 ```
 
 The pure logic (SRT parsing/writing, the contiguous-section model, undo, file
-pairing) lives in the `VideoTaggingCore` library and is unit-tested; the
-SwiftUI app target is `VideoTagging`.
+pairing) lives in the `VideoTaggingCore` library and is unit‑tested; the SwiftUI
+app target is `VideoTagging`.
+
+## Releases
+
+Pushing a version tag builds and publishes a downloadable app:
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+A macOS GitHub Actions runner compiles the app, zips `Légendes.app`, and attaches
+it to a GitHub Release (see [`.github/workflows/release.yml`](.github/workflows/release.yml)).
