@@ -18,6 +18,7 @@ jobs:
     runs-on: macos-15
     env:
       HAS_SIGNING: ${{ secrets.MACOS_CERT_P12_BASE64 != '' }}
+      HAS_SPARKLE: ${{ secrets.SPARKLE_PRIVATE_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -49,6 +50,7 @@ jobs:
       - name: Build app bundle (version from tag, icon baked in, signed if available)
         env:
           LEGENDES_VERSION: ${{ github.ref_name }}
+          SPARKLE_PUBLIC_KEY: ${{ vars.SPARKLE_PUBLIC_KEY }}
         run: ./scripts/build-app.sh
 
       - name: Make DMG
@@ -80,6 +82,28 @@ jobs:
             --wait
           xcrun stapler staple "$DMG"
           xcrun stapler validate "$DMG"
+          # Staple the standalone app too (its cdhash was notarized via the DMG),
+          # so the Sparkle update archive contains a stapled, Gatekeeper-clean app.
+          xcrun stapler staple "Légendes.app"
+
+      - name: Sparkle update archive + appcast
+        if: env.HAS_SIGNING == 'true' && env.HAS_SPARKLE == 'true'
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          mkdir -p sparkle_out
+          # The update Sparkle downloads & installs: a zip of the notarized,
+          # stapled app (Sparkle prefers a .zip over a .dmg for auto-install).
+          ditto -c -k --sequesterRsrc --keepParent "Légendes.app" "sparkle_out/Legendes.zip"
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle_key"
+          TOOLS="$(find .build/artifacts -path '*/Sparkle/bin' -type d | head -1)"
+          "$TOOLS/generate_appcast" --ed-key-file "$RUNNER_TEMP/sparkle_key" \
+            --download-url-prefix "https://github.com/jerefrer/legendes/releases/download/${TAG}/" \
+            sparkle_out
+          echo "SPARKLE_ZIP=sparkle_out/Legendes.zip" >> "$GITHUB_ENV"
+          echo "APPCAST=sparkle_out/appcast.xml" >> "$GITHUB_ENV"
 
       - name: Publish release
         env:
@@ -87,8 +111,10 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME:-manual-$(date +%s)}"
+          ASSETS=("$DMG")
+          [ -n "${SPARKLE_ZIP:-}" ] && ASSETS+=("$SPARKLE_ZIP" "$APPCAST")
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$DMG" --clobber
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
           else
-            gh release create "$TAG" "$DMG" --title "Légendes $TAG" --generate-notes
+            gh release create "$TAG" "${ASSETS[@]}" --title "Légendes $TAG" --generate-notes
           fi

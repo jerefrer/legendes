@@ -84,6 +84,24 @@ variables → Actions**:
 
 The signing identity is auto‑detected from the imported certificate.
 
+## Auto-update (Sparkle)
+
+The app uses [Sparkle](https://sparkle-project.org). When the following are set,
+each release also publishes a signed update archive (`Legendes.zip`) and an
+`appcast.xml`; installed copies then check `…/releases/latest/download/appcast.xml`
+and update themselves (a "Check for Updates…" item is in the app menu).
+
+Generate a key pair once with Sparkle's `generate_keys`, then add:
+
+| Where | Name | What |
+|---|---|---|
+| **Variables** | `SPARKLE_PUBLIC_KEY` | The EdDSA **public** key printed by `generate_keys` (baked into the app's Info.plist as `SUPublicEDKey`). |
+| **Secrets** | `SPARKLE_PRIVATE_KEY` | The EdDSA **private** key (`generate_keys -x file`), used to sign each update. Never commit it. |
+
+Note: auto-update only applies to installs that already include Sparkle — i.e.
+from the first release built with these keys onward. Earlier copies update by
+downloading the new DMG once.
+
 ---
 
 <p align="center">By <a href="https://frerejeremy.me">Jérémy Frère</a></p>

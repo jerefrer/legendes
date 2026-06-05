@@ -11,6 +11,7 @@ enum PendingSaveFlusher {
 struct VideoTaggingApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var settings = AppSettings()
+    @StateObject private var updater = UpdaterViewModel()
 
     var body: some Scene {
         WindowGroup {
@@ -24,6 +25,11 @@ struct VideoTaggingApp: App {
                 .animation(.easeInOut(duration: 0.2), value: settings.interfaceSize)
         }
         .windowStyle(.titleBar)
+        .commands {
+            CommandGroup(after: .appInfo) {
+                CheckForUpdatesCommand(model: updater)
+            }
+        }
     }
 }
 

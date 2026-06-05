@@ -30,6 +30,13 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_PATH/$EXECUTABLE_PRODUCT" "$APP/Contents/MacOS/$EXE_NAME"
 chmod +x "$APP/Contents/MacOS/$EXE_NAME"
 
+# Embed Sparkle.framework (auto-update) and point the executable's rpath at it.
+mkdir -p "$APP/Contents/Frameworks"
+if [ -d "$BIN_PATH/Sparkle.framework" ]; then
+  ditto "$BIN_PATH/Sparkle.framework" "$APP/Contents/Frameworks/Sparkle.framework"
+  install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/$EXE_NAME" 2>/dev/null || true
+fi
+
 # Copy any SwiftPM resource bundles next to the binary (none today, future-proof).
 for b in "$BIN_PATH"/*.bundle; do
   [ -e "$b" ] && cp -R "$b" "$APP/Contents/Resources/" || true
@@ -38,6 +45,15 @@ done
 # App icon (pre-generated .icns committed at app/AppIcon.icns).
 if [ -f "$ROOT/app/AppIcon.icns" ]; then
   cp "$ROOT/app/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
+fi
+
+# Sparkle auto-update feed (stable URL; the workflow publishes appcast.xml to the
+# latest release). The public EdDSA key is injected from the environment so it
+# isn't hardcoded; without it (local build) Sparkle simply can't verify updates.
+SPARKLE_FEED="https://github.com/jerefrer/legendes/releases/latest/download/appcast.xml"
+PUBKEY_PLIST=""
+if [ -n "${SPARKLE_PUBLIC_KEY:-}" ]; then
+  PUBKEY_PLIST="    <key>SUPublicEDKey</key>           <string>${SPARKLE_PUBLIC_KEY}</string>"
 fi
 
 cat > "$APP/Contents/Info.plist" <<PLIST
@@ -58,16 +74,30 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>NSPrincipalClass</key>        <string>NSApplication</string>
     <key>CFBundleIconFile</key>        <string>AppIcon</string>
     <key>LSApplicationCategoryType</key> <string>public.app-category.video</string>
+    <key>SUFeedURL</key>               <string>$SPARKLE_FEED</string>
+    <key>SUEnableAutomaticChecks</key> <true/>
+$PUBKEY_PLIST
 </dict>
 </plist>
 PLIST
 
-# Sign: with a Developer ID (hardened runtime + secure timestamp) when SIGN_IDENTITY
-# is provided (CI notarization path); otherwise ad-hoc for local builds.
+# Sign inside-out: Sparkle's nested helpers, then the framework, then the app.
+# Developer ID + hardened runtime + timestamp for notarization when SIGN_IDENTITY
+# is set; otherwise ad-hoc so local builds still run.
+FW="$APP/Contents/Frameworks/Sparkle.framework"
 if [ -n "${SIGN_IDENTITY:-}" ]; then
+  if [ -d "$FW" ]; then
+    V="$FW/Versions/B"
+    for item in "$V/XPCServices/Downloader.xpc" "$V/XPCServices/Installer.xpc" "$V/Autoupdate" "$V/Updater.app"; do
+      [ -e "$item" ] && codesign --force --options runtime --timestamp \
+        --preserve-metadata=entitlements,identifier --sign "$SIGN_IDENTITY" "$item"
+    done
+    codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$FW"
+  fi
   codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$APP"
   codesign --verify --strict --verbose=2 "$APP"
 else
+  [ -d "$FW" ] && codesign --force --deep --sign - "$FW" >/dev/null 2>&1 || true
   codesign --force --sign - "$APP" >/dev/null 2>&1 || true
 fi
 

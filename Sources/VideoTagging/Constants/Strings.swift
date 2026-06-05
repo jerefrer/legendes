@@ -21,6 +21,7 @@ enum Strings {
     static let close = "Close"
     static let undo = "Undo"
     static let redo = "Redo"
+    static let checkForUpdates = "Check for Updates…"
 
     static func sectionHeader(_ index: Int, _ start: String, _ end: String) -> String {
         "SECTION \(index + 1)  ·  \(start) – \(end)"
