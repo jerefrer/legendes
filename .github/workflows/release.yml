@@ -50,7 +50,8 @@ jobs:
       - name: Build app bundle (version from tag, icon baked in, signed if available)
         env:
           LEGENDES_VERSION: ${{ github.ref_name }}
-          SPARKLE_PUBLIC_KEY: ${{ vars.SPARKLE_PUBLIC_KEY }}
+          # Public key (not secret); accept it whether stored as a repo Variable or Secret.
+          SPARKLE_PUBLIC_KEY: ${{ vars.SPARKLE_PUBLIC_KEY || secrets.SPARKLE_PUBLIC_KEY }}
         run: ./scripts/build-app.sh
 
       - name: Make DMG

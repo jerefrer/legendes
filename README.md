@@ -95,8 +95,12 @@ Generate a key pair once with Sparkle's `generate_keys`, then add:
 
 | Where | Name | What |
 |---|---|---|
-| **Variables** | `SPARKLE_PUBLIC_KEY` | The EdDSA **public** key printed by `generate_keys` (baked into the app's Info.plist as `SUPublicEDKey`). |
+| **Variables** *(or Secrets)* | `SPARKLE_PUBLIC_KEY` | The EdDSA **public** key printed by `generate_keys` (baked into the app's Info.plist as `SUPublicEDKey`). It's public, so a repo Variable is the natural home, but the workflow also accepts it as a Secret. |
 | **Secrets** | `SPARKLE_PRIVATE_KEY` | The EdDSA **private** key (`generate_keys -x file`), used to sign each update. Never commit it. |
+
+> Without `SUPublicEDKey` in the app, Sparkle still validates updates via the
+> app's Developer ID code signature (a supported, secure path); adding the
+> EdDSA key is defense-in-depth on top of that.
 
 Note: auto-update only applies to installs that already include Sparkle — i.e.
 from the first release built with these keys onward. Earlier copies update by
