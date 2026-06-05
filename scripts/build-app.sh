@@ -7,6 +7,9 @@ set -euo pipefail
 APP_NAME="Légendes"
 BUNDLE_ID="com.legendes.Legendes"
 EXECUTABLE_PRODUCT="VideoTagging"   # SwiftPM product name (internal)
+# Version comes from the release tag in CI (LEGENDES_VERSION=v1.2.3); default for local builds.
+VERSION="${LEGENDES_VERSION:-1.0}"
+VERSION="${VERSION#v}"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd -P)"
 cd "$ROOT"
@@ -45,8 +48,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleIdentifier</key>      <string>$BUNDLE_ID</string>
     <key>CFBundlePackageType</key>     <string>APPL</string>
     <key>CFBundleInfoDictionaryVersion</key> <string>6.0</string>
-    <key>CFBundleShortVersionString</key> <string>1.0</string>
-    <key>CFBundleVersion</key>         <string>1</string>
+    <key>CFBundleShortVersionString</key> <string>$VERSION</string>
+    <key>CFBundleVersion</key>         <string>$VERSION</string>
     <key>LSMinimumSystemVersion</key>  <string>14.0</string>
     <key>NSHighResolutionCapable</key> <true/>
     <key>NSPrincipalClass</key>        <string>NSApplication</string>
