@@ -9,6 +9,7 @@ struct EditorView: View {
     @GestureState private var videoDrag: CGFloat = 0
     @State private var optionDown = false
     @State private var flagsMonitor: Any?
+    @State private var actionsHeight: CGFloat = 60   // measured; bigger when the buttons wrap
     @Environment(\.theme) private var theme
     @Environment(AppSettings.self) private var settings
 
@@ -19,10 +20,12 @@ struct EditorView: View {
         HSplitView {
             VStack(spacing: 0) {
                 GeometryReader { geo in
-                    // Reserve enough room below the video for the transport and
-                    // the full card, so growing the video can never cover them.
-                    // On a window too short to fit everything the card scrolls.
-                    let reserved = 380 * theme.scale
+                    // Cap the video so the transport + the full card (description
+                    // at its minimum + the action buttons) always fit below it —
+                    // the buttons never scroll away; only the description scrolls,
+                    // internally. `actionsHeight` is measured because the buttons
+                    // wrap to two rows on narrower widths.
+                    let reserved = actionsHeight + 264 * theme.scale
                     let maxVideo = max(minVideoHeight, geo.size.height - reserved)
                     let videoH = min(max(videoHeight + videoDrag, minVideoHeight), maxVideo)
 
@@ -57,38 +60,31 @@ struct EditorView: View {
                         .padding(.horizontal, theme.l)
                         .padding(.top, theme.s)
 
-                        // Card fills the remaining space (description grows); if
-                        // there isn't enough room it scrolls instead of overlapping.
-                        GeometryReader { lowerGeo in
-                            ScrollView {
-                                SectionCardView(
-                                    index: vm.currentIndex,
-                                    section: vm.currentSection,
-                                    canMoveStart: vm.currentIndex >= 1,
-                                    canMoveEnd: vm.currentIndex + 1 < vm.partition.sections.count,
-                                    canMergePrevious: vm.currentIndex >= 1,
-                                    canMergeNext: vm.currentIndex + 1 < vm.partition.sections.count,
-                                    canCut: vm.canCut,
-                                    optionDown: optionDown,
-                                    text: Binding(
-                                        get: { vm.currentSection.text },
-                                        set: { vm.updateCurrentText($0) }
-                                    ),
-                                    onCut: vm.cutHere,
-                                    onMoveStart: vm.moveStart(byMs:),
-                                    onMoveEnd: vm.moveEnd(byMs:),
-                                    onMergePrevious: vm.mergeWithPrevious,
-                                    onMergeNext: vm.mergeWithNext,
-                                    onBeginEditing: { vm.beginTextEditing() },
-                                    onEndEditing: { vm.endTextEditing() }
-                                )
-                                // No bottom padding: the gap above the timeline
-                                // is provided by the timeline row, and the card
-                                // fills the area exactly (no spurious scrollbar).
-                                .frame(minHeight: max(0, lowerGeo.size.height - theme.l), maxHeight: .infinity)
-                                .padding([.horizontal, .top], theme.l)
-                            }
-                        }
+                        // Card fills the remaining space; the description grows
+                        // and scrolls internally — buttons stay put (no outer scroll).
+                        SectionCardView(
+                            index: vm.currentIndex,
+                            section: vm.currentSection,
+                            canMoveStart: vm.currentIndex >= 1,
+                            canMoveEnd: vm.currentIndex + 1 < vm.partition.sections.count,
+                            canMergePrevious: vm.currentIndex >= 1,
+                            canMergeNext: vm.currentIndex + 1 < vm.partition.sections.count,
+                            canCut: vm.canCut,
+                            optionDown: optionDown,
+                            text: Binding(
+                                get: { vm.currentSection.text },
+                                set: { vm.updateCurrentText($0) }
+                            ),
+                            onCut: vm.cutHere,
+                            onMoveStart: vm.moveStart(byMs:),
+                            onMoveEnd: vm.moveEnd(byMs:),
+                            onMergePrevious: vm.mergeWithPrevious,
+                            onMergeNext: vm.mergeWithNext,
+                            onBeginEditing: { vm.beginTextEditing() },
+                            onEndEditing: { vm.endTextEditing() }
+                        )
+                        .frame(maxHeight: .infinity)
+                        .padding([.horizontal, .top], theme.l)
                     }
                 }
 
@@ -130,6 +126,7 @@ struct EditorView: View {
             }
         }
         .background(.background)
+        .onPreferenceChange(ActionsHeightKey.self) { actionsHeight = $0 }
         .focusable()
         .focusEffectDisabled()
         // While editing the description, let every key reach the text field

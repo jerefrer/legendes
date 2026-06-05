@@ -1,6 +1,15 @@
 import SwiftUI
 import VideoTaggingCore
 
+/// Reports the measured height of the action-buttons row (it wraps to two rows
+/// on narrow widths) so the editor can reserve exactly enough space below the video.
+struct ActionsHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat { 0 }
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 struct SectionCardView: View {
     let index: Int
     let section: VideoSection
@@ -53,6 +62,9 @@ struct SectionCardView: View {
                 oneRow
                 twoRows
             }
+            .background(GeometryReader { p in
+                Color.clear.preference(key: ActionsHeightKey.self, value: p.size.height)
+            })
         }
         .padding(theme.l)
         .background(RoundedRectangle(cornerRadius: theme.radius, style: .continuous).fill(.regularMaterial))
