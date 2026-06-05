@@ -4,7 +4,10 @@
 # appear in the menu bar and the Dock (the Swift module names stay unchanged).
 set -euo pipefail
 
-APP_NAME="Légendes"
+APP_NAME="Légendes"                 # .app folder + display name (menu bar / Dock)
+EXE_NAME="Legendes"                 # ASCII Mach-O name; codesign mishandles an
+                                    # accented main executable ("sealed resource
+                                    # is missing or invalid"), so keep it ASCII.
 BUNDLE_ID="com.legendes.Legendes"
 EXECUTABLE_PRODUCT="VideoTagging"   # SwiftPM product name (internal)
 # Version comes from the release tag in CI (LEGENDES_VERSION=v1.2.3); default for local builds.
@@ -24,8 +27,8 @@ echo "Assembling $APP …"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-cp "$BIN_PATH/$EXECUTABLE_PRODUCT" "$APP/Contents/MacOS/$APP_NAME"
-chmod +x "$APP/Contents/MacOS/$APP_NAME"
+cp "$BIN_PATH/$EXECUTABLE_PRODUCT" "$APP/Contents/MacOS/$EXE_NAME"
+chmod +x "$APP/Contents/MacOS/$EXE_NAME"
 
 # Copy any SwiftPM resource bundles next to the binary (none today, future-proof).
 for b in "$BIN_PATH"/*.bundle; do
@@ -44,7 +47,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <dict>
     <key>CFBundleName</key>            <string>$APP_NAME</string>
     <key>CFBundleDisplayName</key>     <string>$APP_NAME</string>
-    <key>CFBundleExecutable</key>      <string>$APP_NAME</string>
+    <key>CFBundleExecutable</key>      <string>$EXE_NAME</string>
     <key>CFBundleIdentifier</key>      <string>$BUNDLE_ID</string>
     <key>CFBundlePackageType</key>     <string>APPL</string>
     <key>CFBundleInfoDictionaryVersion</key> <string>6.0</string>
