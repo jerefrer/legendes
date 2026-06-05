@@ -27,3 +27,6 @@ Package.resolved
 
 # Built app bundle (regenerate via scripts/build-app.sh)
 *.app/
+
+# Local Claude Code settings
+.claude/settings.local.json
