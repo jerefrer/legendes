@@ -30,3 +30,6 @@ Package.resolved
 
 # Local Claude Code settings
 .claude/settings.local.json
+
+# Temp icon generation workspace
+/build/

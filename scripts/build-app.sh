@@ -29,6 +29,11 @@ for b in "$BIN_PATH"/*.bundle; do
   [ -e "$b" ] && cp -R "$b" "$APP/Contents/Resources/" || true
 done
 
+# App icon (pre-generated .icns committed at app/AppIcon.icns).
+if [ -f "$ROOT/app/AppIcon.icns" ]; then
+  cp "$ROOT/app/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
+fi
+
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -45,6 +50,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSMinimumSystemVersion</key>  <string>14.0</string>
     <key>NSHighResolutionCapable</key> <true/>
     <key>NSPrincipalClass</key>        <string>NSApplication</string>
+    <key>CFBundleIconFile</key>        <string>AppIcon</string>
     <key>LSApplicationCategoryType</key> <string>public.app-category.video</string>
 </dict>
 </plist>
