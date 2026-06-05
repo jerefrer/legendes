@@ -81,7 +81,7 @@ struct SectionCardView: View {
                                        SRTTime(milliseconds: section.end).displayString))
                 .font(theme.label).textCase(.uppercase).kerning(0.5)
             Color.clear.frame(height: 80 * theme.scale + 2 * theme.s)   // TextEditor min + its padding
-            ViewThatFits(in: .horizontal) { oneRow; twoRows }
+            twoRows   // tallest arrangement → reserve room so the card never slides under the timeline
         }
         .padding(theme.l)
         .fixedSize(horizontal: false, vertical: true)
@@ -91,16 +91,55 @@ struct SectionCardView: View {
         })
     }
 
+    // The left/right button clusters. Either may be empty (first section has no
+    // start nudges / merge-previous; last section has no end nudges / merge-next).
+    private var leftGroup: some View {
+        HStack(spacing: theme.l) {
+            if canMergePrevious { mergePreviousButton }
+            if canMoveStart { startNudges }
+        }
+    }
+
+    private var rightGroup: some View {
+        HStack(spacing: theme.l) {
+            if canMoveEnd { endNudges }
+            if canMergeNext { mergeNextButton }
+        }
+    }
+
+    /// One side, in a slot sized to the *wider* of the two groups: each slot holds
+    /// a hidden copy of both groups, so left and right slots have identical width.
+    /// Equal slots keep the overlaid Cut button screen-centered, and a side button
+    /// can never reach far enough to overlap it.
+    private func slot(_ alignment: Alignment, @ViewBuilder _ visible: () -> some View) -> some View {
+        ZStack(alignment: alignment) {
+            leftGroup.hidden()
+            rightGroup.hidden()
+            visible()
+        }
+    }
+
     private var oneRow: some View {
         ZStack {
             cutButton
+            // A hidden Cut between the two slots reserves Cut's real width in the
+            // layout flow, so ViewThatFits measures `2 × widerSide + cut` and wraps
+            // at the correct point — at every interface size, with no overlap.
             HStack(spacing: theme.l) {
-                if canMergePrevious { mergePreviousButton }
-                if canMoveStart { startNudges }
-                Spacer(minLength: 200 * theme.scale)
-                if canMoveEnd { endNudges }
-                if canMergeNext { mergeNextButton }
+                slot(.leading) { leftGroup }
+                cutButton.hidden()
+                slot(.trailing) { rightGroup }
             }
+        }
+    }
+
+    /// Nudge-only side, sized to a nudge group (start ≈ end) so row 1 of the
+    /// wrapped layout keeps Cut centered without overlap, even when a side is empty.
+    private func nudgeSlot(_ alignment: Alignment, @ViewBuilder _ visible: () -> some View) -> some View {
+        ZStack(alignment: alignment) {
+            startNudges.hidden()
+            endNudges.hidden()
+            visible()
         }
     }
 
@@ -109,9 +148,9 @@ struct SectionCardView: View {
             ZStack {
                 cutButton
                 HStack(spacing: theme.l) {
-                    if canMoveStart { startNudges }
-                    Spacer(minLength: 180 * theme.scale)
-                    if canMoveEnd { endNudges }
+                    nudgeSlot(.leading) { if canMoveStart { startNudges } }
+                    cutButton.hidden()
+                    nudgeSlot(.trailing) { if canMoveEnd { endNudges } }
                 }
             }
             HStack(spacing: theme.l) {
