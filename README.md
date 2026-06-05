@@ -25,8 +25,8 @@ section by section. You open a video, split it into segments at each scene chang
 and write a short description for each one. Everything is saved as a standard
 `.srt` subtitle file — so the result works anywhere.
 
-It's built to be **simple and forgiving**: large controls, an adjustable interface
-size, light/dark themes, undo/redo, and automatic saving.
+It's built to be **simple and forgiving**: large controls, light/dark themes,
+undo/redo, and automatic saving.
 
 ## Install
 

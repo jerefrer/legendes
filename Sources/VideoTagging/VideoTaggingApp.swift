@@ -18,11 +18,9 @@ struct VideoTaggingApp: App {
             RootView()
                 .frame(minWidth: 1160, minHeight: 780)
                 .environment(settings)
-                .environment(\.theme, Theme(scale: settings.interfaceSize.scale))
                 .onChange(of: settings.appearance, initial: true) { _, mode in
                     NSApp.appearance = mode.nsAppearance
                 }
-                .animation(.easeInOut(duration: 0.2), value: settings.interfaceSize)
         }
         .windowStyle(.titleBar)
         .commands {

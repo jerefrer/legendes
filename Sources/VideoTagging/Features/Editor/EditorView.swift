@@ -188,14 +188,6 @@ struct EditorView: View {
                 SaveStatusBadge(status: vm.saveStatus)
             }
             ToolbarItemGroup(placement: .primaryAction) {
-                Picker("Interface size", selection: $settings.interfaceSize) {
-                    Text("A").font(.system(size: 11)).tag(InterfaceSize.comfortable)
-                    Text("A").font(.system(size: 14)).tag(InterfaceSize.large)
-                    Text("A").font(.system(size: 17)).tag(InterfaceSize.extraLarge)
-                }
-                .pickerStyle(.segmented)
-                .help("Interface size")
-
                 Picker("Appearance", selection: $settings.appearance) {
                     Image(systemName: "circle.lefthalf.filled").tag(AppearanceMode.system)
                     Image(systemName: "sun.max").tag(AppearanceMode.light)
