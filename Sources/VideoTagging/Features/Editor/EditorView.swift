@@ -82,8 +82,11 @@ struct EditorView: View {
                                     onBeginEditing: { vm.beginTextEditing() },
                                     onEndEditing: { vm.endTextEditing() }
                                 )
-                                .frame(minHeight: max(0, lowerGeo.size.height - 2 * theme.l), maxHeight: .infinity)
-                                .padding(theme.l)
+                                // No bottom padding: the gap above the timeline
+                                // is provided by the timeline row, and the card
+                                // fills the area exactly (no spurious scrollbar).
+                                .frame(minHeight: max(0, lowerGeo.size.height - theme.l), maxHeight: .infinity)
+                                .padding([.horizontal, .top], theme.l)
                             }
                         }
                     }
